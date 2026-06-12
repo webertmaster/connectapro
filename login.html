@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Connecta Pro</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .login-box {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 360px;
+            text-align: center;
+            border: 1px solid #334155;
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-box img {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .login-box h2 {
+            color: #f8fafc;
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+        .login-box p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            color: #64748b;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f8fafc;
+            font-size: 15px;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+        .login-box input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-login:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        #msg-erro {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 15px;
+            display: none;
+            font-weight: 500;
+        }
+        @keyframes shake { 
+            0% { transform: translateX(0); } 
+            25% { transform: translateX(-5px); } 
+            50% { transform: translateX(5px); } 
+            75% { transform: translateX(-5px); } 
+            100% { transform: translateX(0); } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <img src="img/icon-512.png.png" alt="Connecta Pro">
+        <h2>CONNECTA PRO</h2>
+        <p>Acesso restrito à portaria</p>
+
+        <div class="input-group">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="email" placeholder="E-mail de Acesso">
+        </div>
+        
+        <div class="input-group">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="senha" placeholder="Senha">
+        </div>
+
+        <button id="btn-entrar" class="btn-login">
+            Entrar no Sistema <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        
+        <div id="msg-erro"><i class="fa-solid fa-triangle-exclamation"></i> E-mail ou senha incorretos!</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        // IMPORTAMOS O FIRESTORE PARA BUSCAR O PERFIL DO USUÁRIO
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCY6Jq9GVYJEQrH0JZ9TAWcQVm-cImiwoc",
+            authDomain: "portaria-pro-ebc5c.firebaseapp.com",
+            projectId: "portaria-pro-ebc5c",
+            storageBucket: "portaria-pro-ebc5c.firebasestorage.app",
+            messagingSenderId: "948781126590",
+            appId: "1:948781126590:web:5e8888eb6e8124f7df5fef"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app); // LIGAMOS O BANCO
+
+        const btnEntrar = document.getElementById('btn-entrar');
+        const emailInput = document.getElementById('email');
+        const senhaInput = document.getElementById('senha');
+        const msgErro = document.getElementById('msg-erro');
+        const loginBox = document.querySelector('.login-box');
+
+        function tentarLogin() {
+            const email = emailInput.value.trim();
+            const senha = senhaInput.value.trim();
+            
+            btnEntrar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Autenticando...';
+            btnEntrar.style.pointerEvents = 'none';
+
+            // 1. Verifica E-mail e Senha
+            signInWithEmailAndPassword(auth, email, senha)
+                .then(async (userCredential) => {
+                    const uid = userCredential.user.uid;
+                    
+                    try {
+                        // 2. Vai no banco buscar o "Crachá" do funcionário
+                        const docRef = doc(db, "usuarios", uid);
+                        const docSnap = await getDoc(docRef);
+
+                        if (docSnap.exists()) {
+                            const dadosUsuario = docSnap.data();
+                            
+                            // 3. Salva os dados do SaaS na memória do navegador
+                            localStorage.setItem("connectapro_logado", "true");
+                            localStorage.setItem("usuario_id", uid);
+                            localStorage.setItem("usuario_nome", dadosUsuario.nome);
+                            localStorage.setItem("usuario_cargo", dadosUsuario.cargo); // 'master' ou 'operacional'
+                            localStorage.setItem("condominioId", dadosUsuario.condominioId); // A MÁGICA ACONTECE AQUI
+                            
+                            // 4. Libera a catraca
+                            window.location.href = "index.html";
+                        } else {
+                            throw new Error("Perfil de usuário não encontrado no banco de dados.");
+                        }
+                    } catch (error) {
+                        mostrarErro("Erro ao buscar perfil. Contate o suporte.");
+                    }
+                })
+                .catch((error) => {
+                    mostrarErro("E-mail ou senha incorretos!");
+                });
+        }
+
+        function mostrarErro(mensagem) {
+            btnEntrar.innerHTML = 'Entrar no Sistema <i class="fa-solid fa-arrow-right"></i>';
+            btnEntrar.style.pointerEvents = 'auto';
+            msgErro.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${mensagem}`;
+            msgErro.style.display = "block";
+            loginBox.style.animation = "none";
+            setTimeout(() => loginBox.style.animation = "shake 0.4s", 10);
+        }
+
+        btnEntrar.addEventListener('click', tentarLogin);
+        document.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') tentarLogin();
+        });
+    </script>
+</body>
+</html>

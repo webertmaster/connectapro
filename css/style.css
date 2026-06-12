@@ -1,0 +1,157 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f4f7fb; display: flex; color: #2c3e50; transition: background 0.3s, color 0.3s; }
+
+/* SIDEBAR MODERNA */
+.sidebar { width: 260px; height: 100vh; background: #1e293b; position: fixed; left: 0; top: 0; padding: 30px 20px; overflow: auto; color: white; box-shadow: 4px 0 15px rgba(0,0,0,0.05); z-index: 100; transition: background 0.3s; }
+.logo { text-align: center; margin-bottom: 40px; }
+.logo-icon { width: 70px; height: 70px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: auto; font-size: 22px; font-weight: bold; color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
+.logo h2 { margin-top: 15px; font-size: 20px; font-weight: 600; letter-spacing: 1px; color: #f8fafc; }
+
+/* MENU PREMIUM */
+.menu-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; margin-bottom: 12px; padding-left: 20px; }
+.menu button { width: 100%; padding: 14px 20px; border: none; border-radius: 10px; margin-bottom: 8px; background: transparent; color: #94a3b8; cursor: pointer; text-align: left; font-size: 15px; font-weight: 500; transition: all 0.3s ease; border-left: 4px solid transparent; display: flex; align-items: center; }
+.menu button i { margin-right: 12px; width: 20px; text-align: center; font-size: 16px; }
+.menu button:hover { background: rgba(255, 255, 255, 0.05); color: #ffffff; border-left: 4px solid #3b82f6; transform: translateX(4px); }
+
+/* CONTENT & CARDS CLEAN */
+.content { margin-left: 260px; padding: 40px; width: 100%; max-width: 1400px; margin-right: auto; position: relative; }
+.box { background: #ffffff; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; transition: background 0.3s, border 0.3s; }
+.card { background: #ffffff; padding: 20px; border-radius: 12px; margin-top: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; transition: transform 0.2s ease, background 0.3s, border 0.3s; }
+.card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+.card h3 { color: #0f172a; margin-bottom: 12px; font-size: 18px; transition: color 0.3s; }
+.card p { color: #475569; font-size: 14px; margin-bottom: 6px; line-height: 1.5; transition: color 0.3s; }
+
+/* INPUTS MINIMALISTAS */
+input, select, textarea { width: 100%; padding: 14px 16px; margin-top: 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 15px; background: #f8fafc; transition: all 0.3s; color: #334155; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; background: #ffffff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+textarea { min-height: 100px; resize: vertical; }
+
+/* BOTÕES MODERNOS */
+.btn { width: 100%; padding: 14px; border: none; border-radius: 10px; margin-top: 15px; background: #3b82f6; color: white; cursor: pointer; font-size: 15px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }
+.btn:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3); }
+
+/* BOTÕES DE AÇÃO DOS CARDS */
+.acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.btn-acao { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: 600; font-size: 13px; text-align: center; transition: all 0.2s; }
+.btn-acao:hover { filter: brightness(1.1); transform: scale(1.02); }
+.editar { background: #f59e0b; color: #fff; }
+.excluir { background: #ef4444; color: #fff; }
+.entregue { background: #10b981; color: #fff; }
+.whats { background: #25d366; color: #fff; }
+.print { background: #475569; color: #fff; }
+.qr-btn { background: #64748b; color: #fff; }
+.finalizado { background: #3b82f6; color: #fff; }
+
+/* BADGES */
+.badge { display: inline-block; padding: 6px 12px; border-radius: 20px; margin-bottom: 15px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+.status-pendente { background: #fef3c7; color: #d97706; }
+.status-andamento { background: #e0f2fe; color: #0284c7; }
+.status-entregue { background: #d1fae5; color: #059669; }
+.status-urgente { background: #fee2e2; color: #dc2626; }
+
+/* FOTO E CANVAS */
+.foto { width: 100%; border-radius: 10px; margin-top: 15px; max-height: 250px; object-fit: cover; border: 1px solid #e2e8f0; }
+.tela { display: none; animation: fadeIn 0.4s ease; }
+.ativa { display: block; }
+canvas { width: 100%; height: 200px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; margin-top: 10px; touch-action: none; cursor: crosshair; }
+
+/* ESTILOS DA DASHBOARD COMPACTA */
+.dash-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; transition: background 0.3s, border 0.3s; }
+.btn-dark { background: #1e293b; color: #f8fafc; border: none; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+.btn-dark:hover { transform: scale(1.05); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.stat-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; border: 1px solid #e2e8f0; transition: transform 0.2s, background 0.3s, border 0.3s; }
+.stat-card:hover { transform: translateY(-3px); }
+.stat-card i { font-size: 22px !important; margin-bottom: 8px !important; }
+.stat-card span { font-size: 24px; margin-top: 5px; font-weight: 800; color: #0f172a; transition: color 0.3s; }
+.stat-card p { font-size: 12px; font-weight: bold; margin-top: 5px; }
+
+/* ANIMAÇÕES DO PONTO PULSANTE (ENCOMENDAS E OCORRÊNCIAS) */
+@keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+@keyframes pulse-yellow { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+.dot-status { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.dot-green { background: #10b981; animation: pulse-green 2s infinite; }
+.dot-yellow { background: #f59e0b; animation: pulse-yellow 2s infinite; }
+.dot-red { background: #ef4444; animation: pulse-red 2s infinite; }
+
+/* ESTILOS ESPECÍFICOS: GRID DE APARTAMENTOS E MODAL (MORADORES) */
+.apto-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; }
+.apto-btn { background: #e0f2fe; color: #0284c7; border: 2px solid #bae6fd; border-radius: 50%; width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.apto-btn:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; transform: scale(1.1); }
+
+/* LINHA DO TEMPO - PLANTÃO */
+.timeline { position: relative; padding-left: 40px; margin-top: 20px; }
+.timeline::before { content: ''; position: absolute; left: 15px; top: 0; height: 100%; width: 2px; background: #e2e8f0; transition: background 0.3s; }
+.timeline-item { position: relative; margin-bottom: 25px; }
+.timeline-dot { position: absolute; left: -32.5px; top: 5px; width: 15px; height: 15px; background: #3b82f6; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #3b82f6; transition: border-color 0.3s; }
+
+/* === O SEGREDO DO MODAL ESTÁ AQUI === */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); animation: fadeIn 0.2s ease; }
+.modal-overlay.ativo { display: flex; } /* <-- ESSA LINHA FAZIA FALTA! */
+.modal-content { background: #fff; width: 90%; max-width: 400px; border-radius: 16px; padding: 25px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+.fechar-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; transition: color 0.2s; }
+.fechar-modal:hover { color: #ef4444; }
+
+/* DARK MODE MÁGICO */
+body.dark-mode { background: #0f172a; color: #f8fafc; }
+body.dark-mode .content h2, body.dark-mode .content h3, body.dark-mode .content p, body.dark-mode .card h3, body.dark-mode .card p { color: #f8fafc; }
+body.dark-mode .box, body.dark-mode .card, body.dark-mode .dash-header, body.dark-mode .stat-card { background: #1e293b; border-color: #334155; color: white; box-shadow: none; }
+body.dark-mode .stat-card span { color: #f8fafc; }
+body.dark-mode input, body.dark-mode select, body.dark-mode textarea { background: #0f172a; color: white; border-color: #475569; }
+body.dark-mode .badge { background: rgba(255,255,255,0.1); }
+body.dark-mode .btn-dark { background: #f8fafc; color: #1e293b; }
+body.dark-mode canvas { background: #0f172a; border-color: #475569; }
+body.dark-mode .apto-btn { background: #1e293b; color: #38bdf8; border-color: #334155; }
+body.dark-mode .apto-btn:hover { background: #3b82f6; color: #fff; }
+body.dark-mode .modal-content { background: #1e293b; border: 1px solid #334155; }
+body.dark-mode .timeline::before { background: #334155; }
+body.dark-mode .timeline-dot { border-color: #1e293b; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* RESPONSIVO */
+@media(max-width: 800px) {
+    .sidebar { width: 80px; padding: 20px 10px; }
+    .logo h2 { display: none; }
+    .logo-icon { width: 50px; height: 50px; font-size: 16px; }
+    .menu-label { display: none; }
+    .menu button { padding: 15px 0; text-align: center; font-size: 12px; flex-direction: column; align-items: center; border-left: none; border-bottom: 4px solid transparent; }
+    .menu button:hover { border-left: none; border-bottom: 4px solid #3b82f6; transform: translateY(-4px); }
+    .menu button i { margin-right: 0; margin-bottom: 5px; font-size: 20px; }
+    .content { margin-left: 80px; padding: 20px; }
+    .dash-header { flex-direction: column; gap: 15px; text-align: center; }
+}
+
+.filtro-container { display: flex; gap: 10px; align-items: center; margin-top: 15px; flex-wrap: wrap;}
+.filtro-container input, .filtro-container select { margin-top: 0; flex: 1; min-width: 200px;}
+.btn-limpar { background-color: #64748b; width: auto; white-space: nowrap; margin-top: 0; }
+
+/* CORREÇÃO PARA CAMPOS DE DATA E MÊS */
+input[type="month"], input[type="date"] {
+    width: auto !important;
+    margin-top: 0 !important;
+    display: inline-block !important;
+    appearance: auto !important; /* Isso faz o Chrome mostrar o ícone e o texto */
+    -webkit-appearance: auto !important;
+}
+
+/* Garante que o container dos filtros se comporte bem */
+.filtro-container input[type="month"], .filtro-container input[type="date"] {
+    flex: 1;
+    min-width: 160px;
+    height: 45px;
+}
+
+/* Força o Chrome a respeitar o nosso design */
+input[type="month"]::-webkit-datetime-edit-text,
+input[type="month"]::-webkit-datetime-edit-month-field,
+input[type="month"]::-webkit-datetime-edit-year-field {
+    color: #0f172a !important;
+}
+
+input[type="month"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+}
