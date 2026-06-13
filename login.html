@@ -184,6 +184,11 @@
                         if (docSnap.exists()) {
                             const dadosUsuario = docSnap.data();
                             
+                            // ==========================================
+                            // LIMPEZA GERAL ANTES DE SALVAR O NOVO CLIENTE
+                            // ==========================================
+                            localStorage.clear();
+                            
                             // 3. Salva os dados do SaaS na memória do navegador
                             localStorage.setItem("connectapro_logado", "true");
                             localStorage.setItem("usuario_id", uid);
