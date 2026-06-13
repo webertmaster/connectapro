@@ -332,3 +332,36 @@ function gerarRelatorioMoradores() {
 
     doc.save("Auditoria_Moradores_Ativos.pdf");
 }
+
+// ==========================================
+// 5. ATALHO INTELIGENTE PARA A GARAGEM
+// ==========================================
+function redirecionarParaVeiculo(idCarro) {
+    // 1. Pega os dados do carro pelo ID (no localStorage para ser mais rápido)
+    const veiculos = JSON.parse(localStorage.getItem('veiculos')) || [];
+    const carroClicado = veiculos.find(v => v.id === idCarro || v.idFirebase === idCarro);
+    
+    if (!carroClicado) {
+        alert("Veículo não encontrado na base de dados!");
+        return;
+    }
+
+    // 2. Fecha o modal do morador que está aberto
+    fecharModalMorador();
+
+    // 3. Muda a aba principal para "Veículos" (usando a função do app.js)
+    if (typeof trocarTela === 'function') {
+        trocarTela('veiculos');
+    }
+
+    // 4. Preenche a barra de pesquisa da garagem com a placa clicada e filtra
+    const barraPesquisa = document.getElementById('pesquisaVeiculo');
+    if (barraPesquisa) {
+        barraPesquisa.value = carroClicado.placa;
+        
+        // Dispara a função de pesquisa que já existe no seu veiculos.js
+        if (typeof mostrarVeiculos === 'function') {
+            mostrarVeiculos();
+        }
+    }
+}
