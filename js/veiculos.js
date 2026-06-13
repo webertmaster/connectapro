@@ -26,18 +26,21 @@ function identificarMarca(modeloStr) {
         return { nome: 'Honda Motos', cor: '#cc0000', img: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Honda_Logo.svg', logo: 'fa-motorcycle' };
     }
     
-    // 2. CARROS
+    //// 2. CARROS
     if (m.includes('toyota') || m.includes('corolla') || m.includes('hilux') || m.includes('yaris') || m.includes('sw4')) return { nome: 'Toyota', cor: '#eb0a1e', img: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_carlogo.svg', logo: 'fa-car' };
     if (m.includes('honda') || m.includes('civic') || m.includes('hrv') || m.includes('fit') || m.includes('city')) return { nome: 'Honda', cor: '#000000', img: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Honda_Logo.svg', logo: 'fa-car' };
-    if (m.includes('vw') || m.includes('volkswagen') || m.includes('gol') || m.includes('polo') || m.includes('nivus') || m.includes('jetta') || m.includes('saveiro')) return { nome: 'Volkswagen', cor: '#001e50', img: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Volkswagen_logo_2019.svg', logo: 'fa-car' };
-    if (m.includes('chevrolet') || m.includes('gm') || m.includes('onix') || m.includes('tracker') || m.includes('cruze') || m.includes('s10') || m.includes('spin')) return { nome: 'Chevrolet', cor: '#b58500', img: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Chevrolet-logo.png', logo: 'fa-car' };
+    if (m.includes('vw') || m.includes('volkswagen') || m.includes('gol') || m.includes('polo') || m.includes('nivus') || m.includes('jetta') || m.includes('saveiro') || m.includes('fusca') || m.includes('fox') || m.includes('voyage')) return { nome: 'Volkswagen', cor: '#001e50', img: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Volkswagen_logo_2019.svg', logo: 'fa-car' };
+    if (m.includes('chevrolet') || m.includes('gm') || m.includes('onix') || m.includes('tracker') || m.includes('cruze') || m.includes('s10') || m.includes('spin') || m.includes('corsa') || m.includes('celta') || m.includes('classic') || m.includes('prisma')) return { nome: 'Chevrolet', cor: '#b58500', img: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Chevrolet-logo.png', logo: 'fa-car' };
     if (m.includes('fiat') || m.includes('argo') || m.includes('strada') || m.includes('toro') || m.includes('mobi') || m.includes('pulse') || m.includes('fastback') || m.includes('uno')) return { nome: 'Fiat', cor: '#000E34', img: 'https://upload.wikimedia.org/wikipedia/commons/1/12/Fiat_Automobiles_logo.svg', logo: 'fa-car' };
     if (m.includes('hyundai') || m.includes('hb20') || m.includes('creta') || m.includes('tucson')) return { nome: 'Hyundai', cor: '#002c5f', img: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Hyundai_Motor_Company_logo.svg', logo: 'fa-car' };
     if (m.includes('jeep') || m.includes('renegade') || m.includes('compass') || m.includes('commander')) return { nome: 'Jeep', cor: '#ffba00', img: 'img/jeep.png.png', logo: 'fa-truck-field' };
     if (m.includes('nissan') || m.includes('kicks') || m.includes('versa') || m.includes('frontier')) return { nome: 'Nissan', cor: '#c3002f', img: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Nissan_logo.png', logo: 'fa-car' };
-    if (m.includes('renault') || m.includes('kwid') || m.includes('sandero') || m.includes('duster') || m.includes('logan')) return { nome: 'Renault', cor: '#fbc400', img: 'https://upload.wikimedia.org/wikipedia/commons/4/49/Renault_2021_logo.svg', logo: 'fa-car' };
+    if (m.includes('renault') || m.includes('kwid') || m.includes('sandero') || m.includes('duster') || m.includes('logan')) return { nome: 'Renault', cor: '#fbc400', img: 'https://upload.wikimedia.org/wikipedia/commons/4/49/Renault_2021_logo.svg', logo: 'fa-car' };   
     if (m.includes('ford') || m.includes('ka') || m.includes('ranger') || m.includes('ecosport') || m.includes('fiesta')) return { nome: 'Ford', cor: '#003478', img: 'https://upload.wikimedia.org/wikipedia/commons/a/a0/Ford_Motor_Company_Logo.svg', logo: 'fa-truck-pickup' };
     
+    // --- NOVAS MARCAS ADICIONADAS ---
+    if (m.includes('bmw') || m.includes('x1') || m.includes('320i') || m.includes('x3') || m.includes('x5')) return { nome: 'BMW', cor: '#0066b1', img: 'https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg', logo: 'fa-car' };
+    if (m.includes('byd') || m.includes('dolphin') || m.includes('seal') || m.includes('song') || m.includes('yuan')) return { nome: 'BYD', cor: '#000000', img: 'img/byd.png.png', logo: 'fa-car-side' };
     return { nome: 'Veículo', cor: '#64748b', img: null, logo: 'fa-car-side' };
 }
 
