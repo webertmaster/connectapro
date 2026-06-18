@@ -92,7 +92,7 @@ function atualizarDashboard() {
     });
 
     // Plantão / Passagens
-    db.collection("plantao").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+    db.collection("passagem").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
         let total = 0;
         snap.forEach(doc => { if (!doc.data().excluido) total++; });
         if(document.getElementById('dash-plantao')) document.getElementById('dash-plantao').textContent = total;
