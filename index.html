@@ -27,16 +27,20 @@
 
     <div class="menu-label">Menu</div>
     <div class="menu">
-        <button onclick="trocarTela('dashboard')" id="menu-dashboard" style="background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6; color: #fff;"><i class="fa-solid fa-house"></i> Início</button>
+       <button onclick="trocarTela('dashboard')" id="menu-dashboard" style="background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6; color: #fff;"><i class="fa-solid fa-house"></i> Início</button>
         <button onclick="trocarTela('equipe')" id="menu-equipe"><i class="fa-solid fa-id-badge"></i> Equipe</button>
         <button onclick="trocarTela('passagem')" id="menu-passagem"><i class="fa-solid fa-clipboard-check"></i> Plantão</button>
         <button onclick="trocarTela('ponto')" id="menu-ponto"><i class="fa-solid fa-user-clock"></i> Ponto</button>
         <button onclick="trocarTela('moradores')" id="menu-moradores"><i class="fa-solid fa-users"></i> Moradores</button>
         <button onclick="trocarTela('veiculos')" id="menu-veiculos"><i class="fa-solid fa-car"></i> Veículos</button>
         <button onclick="trocarTela('reservas')" id="menu-reservas"><i class="fa-solid fa-calendar-check"></i> Reservas</button>
+        
         <button onclick="trocarTela('encomendas')" id="menu-encomendas"><i class="fa-solid fa-box-open"></i> Encomendas</button>
+        <button onclick="trocarTela('delivery')" id="menu-delivery"><i class="fa-solid fa-motorcycle"></i> Delivery Rápido</button>
+        
         <button onclick="trocarTela('ocorrencias')" id="menu-ocorrencias"><i class="fa-solid fa-triangle-exclamation"></i> Ocorrências</button>
         <button onclick="trocarTela('comunicados')" id="menu-comunicados"><i class="fa-solid fa-bullhorn"></i> Comunicados</button>
+        
         <button onclick="trocarTela('relatorios')" id="menu-relatorios" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; color: #38bdf8;"><i class="fa-solid fa-chart-line"></i> Relatórios</button>
         
         <button onclick="deslogarSistema()" id="menu-sair" style="margin-top: 10px; color: #ef4444;"><i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema</button>
@@ -538,6 +542,48 @@
         </div>
         <div id="listaEncomendas" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; align-items: start;"></div>
     </div>
+
+    <div id="delivery" class="tela">
+        <div class="header-tela">
+            <h2><i class="fa-solid fa-motorcycle" style="color: #ef4444;"></i> Delivery Rápido</h2>
+            <p>Gestão de iFood, Rappi, Farmácias e Lanches</p>
+        </div>
+
+        <div class="card" style="margin-bottom: 25px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div>
+                    <label>Apto / Bloco</label>
+                    <input type="text" id="delApto" placeholder="Ex: 201">
+                </div>
+                <div>
+                    <label>Morador Responsável</label>
+                    <input type="text" id="delMorador" placeholder="Ex: João Silva">
+                </div>
+                <div>
+                    <label>Aplicativo</label>
+                    <input type="text" id="delPlataforma" placeholder="Ex: iFood, Rappi...">
+                </div>
+                <div>
+                    <label>Código de Liberação (Se souber)</label>
+                    <input type="text" id="delCodigoInformado" placeholder="Ex: 8842">
+                </div>
+
+                <div id="boxCodigoOculto" style="grid-column: 1 / -1; background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px dashed #10b981; display: none; align-items: center; justify-content: space-between;">
+                    <span style="color: #059669; font-size: 14px; font-weight: bold;">
+                        <i class="fa-solid fa-brain"></i> Memória do Sistema:
+                    </span>
+                    <strong id="delCodigoFixo" style="font-size: 18px; color: #0f172a; letter-spacing: 2px;"></strong>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="salvarDelivery()" style="width: 100%; background: #ef4444; color: white;">
+                <i class="fa-solid fa-bell"></i> Registrar e Avisar Morador
+            </button>
+        </div>
+
+        <div id="listaDelivery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+        </div>
+    </div>
     
     <div id="comunicados" class="tela">
         <div class="box">
@@ -700,6 +746,7 @@
 <script src="js/comunicados.js"></script>
 <script src="js/relatorios.js"></script>
 <script src="js/limpeza.js"></script>
+<script src="js/delivery.js"></script>
 
 <script>
   if ('serviceWorker' in navigator) {
