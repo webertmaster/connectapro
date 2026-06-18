@@ -71,7 +71,6 @@ function atualizarDashboard() {
         let pendentes = 0;
         snap.forEach(doc => { 
             let enc = doc.data();
-            // Conta apenas se não estiver excluída e o status não for Entregue
             if (!enc.excluido && enc.status !== 'Entregue') pendentes++; 
         });
         if(document.getElementById('dash-encomendas')) document.getElementById('dash-encomendas').textContent = pendentes;
@@ -98,28 +97,62 @@ function atualizarDashboard() {
         if(document.getElementById('dash-plantao')) document.getElementById('dash-plantao').textContent = total;
     });
 
+    // Ocorrências Abertas
+    db.collection("ocorrencias").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let abertas = 0;
+        snap.forEach(doc => { 
+            let oco = doc.data();
+            if (!oco.excluido && oco.status !== '🟢 Resolvido' && oco.status !== 'Resolvido') abertas++; 
+        });
+        if(document.getElementById('dash-ocorrencias')) document.getElementById('dash-ocorrencias').textContent = abertas;
+    });
 
-    // ==========================================
-    // 💾 2. MÓDULOS LOCAIS (Aguardando migração futura)
-    // ==========================================
-    const ocorrencias = JSON.parse(localStorage.getItem('ocorrencias')) || [];
-    const reservas = JSON.parse(localStorage.getItem('reservas')) || [];
-    const equipe = JSON.parse(localStorage.getItem('equipe')) || [];
-    const pontos = JSON.parse(localStorage.getItem('pontos')) || [];
-    const comunicados = JSON.parse(localStorage.getItem('comunicados')) || [];
+    // Reservas Agendadas para Hoje (Nuvem)
+    db.collection("reservas").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let reservasHj = 0;
+        const hojeStr = new Date().toISOString().split('T')[0]; // Pega a data exata de hoje
+        
+        snap.forEach(doc => { 
+            let r = doc.data();
+            // Verifica se a reserva é para hoje e não foi excluída/arquivada
+            if (!r.excluido && r.data === hojeStr) reservasHj++; 
+        });
+        
+        if(document.getElementById('dash-reservas')) document.getElementById('dash-reservas').textContent = reservasHj;
+    });
 
-    const hoje = new Date().toISOString().split('T')[0];
-    
-    const ocorrenciasAbertas = ocorrencias.filter(o => o.status !== '🟢 Resolvido').length;
-    const reservasHoje = reservas.filter(r => r.data === hoje).length;
-    const pontosHoje = pontos.filter(p => p.data === hoje).length;
-    const comunicadosAtivos = comunicados.filter(c => c.status !== '🟢 Resolvido').length;
+    // Comunicados Ativos (Nuvem)
+    db.collection("comunicados").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let ativos = 0;
+        snap.forEach(doc => { 
+            let com = doc.data();
+            // Conta apenas se não estiver excluído e se o status NÃO for Resolvido
+            if (!com.excluido && !com.status.includes('Resolvido')) ativos++; 
+        });
+        if(document.getElementById('dash-comunicados')) document.getElementById('dash-comunicados').textContent = ativos;
+    });
 
-    if(document.getElementById('dash-ocorrencias')) document.getElementById('dash-ocorrencias').textContent = ocorrenciasAbertas;
-    if(document.getElementById('dash-reservas')) document.getElementById('dash-reservas').textContent = reservasHoje;
-    if(document.getElementById('dash-equipe')) document.getElementById('dash-equipe').textContent = equipe.length;
-    if(document.getElementById('dash-ponto')) document.getElementById('dash-ponto').textContent = pontosHoje;
-    if(document.getElementById('dash-comunicados')) document.getElementById('dash-comunicados').textContent = comunicadosAtivos;
+    // Gestão de Equipe (Nuvem)
+    db.collection("equipe").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let totalEquipe = 0;
+        // Como a exclusão é definitiva, basta contar quantos documentos voltaram
+        snap.forEach(() => { totalEquipe++; });
+        if(document.getElementById('dash-equipe')) document.getElementById('dash-equipe').textContent = totalEquipe;
+    });
+
+    // Controle de Ponto Hoje (Nuvem)
+    db.collection("ponto").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let pontosHj = 0;
+        const hojeStr = new Date().toISOString().split('T')[0];
+        
+        snap.forEach(doc => { 
+            // Conta quantas batidas de ponto aconteceram apenas na data de hoje
+            if (doc.data().data === hojeStr) pontosHj++; 
+        });
+        
+        if(document.getElementById('dash-ponto')) document.getElementById('dash-ponto').textContent = pontosHj;
+    });
+
 }
 
 // --- INICIALIZAÇÃO ---
@@ -139,7 +172,6 @@ window.onload = () => {
     // ==========================================
     const nomeSalvo = localStorage.getItem("usuario_nome");
     if (nomeSalvo) {
-        // Pega só o primeiro nome (Ex: "Paulo Porteiro" vira "Paulo")
         const primeiroNome = nomeSalvo.split(" ")[0]; 
         
         const elementoNome = document.getElementById("nomeFuncionarioLogado");
