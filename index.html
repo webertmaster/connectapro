@@ -391,6 +391,7 @@
         </div>
         <div id="listaReservas"></div>
     </div>
+    
     <div id="ocorrencias" class="tela">
         
         <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-bottom: 15px; gap: 10px;">
@@ -475,7 +476,8 @@
                 <input type="file" id="ocoFoto" accept="image/*" style="flex: 1; margin: 0;">
                 <button class="btn" id="btnSalvarOcorrencia" onclick="salvarOcorrencia()" style="flex: 1; margin: 0; background: #3b82f6;"><i class="fa-solid fa-floppy-disk"></i> Salvar Ocorrência</button>
             </div>
-        </div> <div id="listaOcorrencias"></div>
+        </div> 
+        <div id="listaOcorrencias"></div>
     </div>
 
     <div id="encomendas" class="tela">
@@ -550,38 +552,68 @@
         </div>
 
         <div class="card" style="margin-bottom: 25px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                <div>
-                    <label>Apto / Bloco</label>
-                    <input type="text" id="delApto" placeholder="Ex: 201">
-                </div>
-                <div>
-                    <label>Morador Responsável</label>
-                    <input type="text" id="delMorador" placeholder="Ex: João Silva">
-                </div>
-                <div>
-                    <label>Aplicativo</label>
-                    <input type="text" id="delPlataforma" placeholder="Ex: iFood, Rappi...">
-                </div>
-                <div>
-                    <label>Código de Liberação (Se souber)</label>
-                    <input type="text" id="delCodigoInformado" placeholder="Ex: 8842">
-                </div>
-
-                <div id="boxCodigoOculto" style="grid-column: 1 / -1; background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px dashed #10b981; display: none; align-items: center; justify-content: space-between;">
-                    <span style="color: #059669; font-size: 14px; font-weight: bold;">
-                        <i class="fa-solid fa-brain"></i> Memória do Sistema:
-                    </span>
-                    <strong id="delCodigoFixo" style="font-size: 18px; color: #0f172a; letter-spacing: 2px;"></strong>
+            <div style="background: rgba(59, 130, 246, 0.03); padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px;">
+                    <i class="fa-solid fa-box" style="color: #3b82f6;"></i> 1. Dados do Pedido
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <label>Apto / Bloco</label>
+                        <input type="text" id="delApto" placeholder="Ex: 201">
+                    </div>
+                    <div>
+                        <label>Morador Responsável</label>
+                        <input type="text" id="delMorador" placeholder="Ex: João Silva">
+                    </div>
+                    <div>
+                        <label>Aplicativo</label>
+                        <input type="text" id="delPlataforma" placeholder="Ex: iFood, Rappi...">
+                    </div>
                 </div>
             </div>
+
+            <div style="background: rgba(16, 185, 129, 0.03); padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px;">
+                    <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i> 2. Segurança e Entregador
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <label>Código de Liberação (Se tiver)</label>
+                        <input type="text" id="delCodigoInformado" placeholder="Ex: 8842">
+                    </div>
+                    <div>
+                        <label>Nome do Entregador (Opcional)</label>
+                        <input type="text" id="delEntregador" placeholder="Ex: Carlos">
+                    </div>
+                    <div>
+                        <label>RG do Entregador (Opcional)</label>
+                        <input type="text" id="delRG" placeholder="Ex: 12.345.678-9">
+                    </div>
+                </div>
+            </div>
+
+            <div id="boxCodigoOculto" style="background: #ecfdf5; padding: 15px; border-radius: 8px; border: 1px dashed #10b981; display: none; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <span style="color: #059669; font-size: 15px; font-weight: bold;">
+                    <i class="fa-solid fa-brain"></i> Memória do Sistema:
+                </span>
+                <strong id="delCodigoFixo" style="font-size: 20px; color: #0f172a; letter-spacing: 2px;"></strong>
+            </div>
             
-            <button class="btn" onclick="salvarDelivery()" style="width: 100%; background: #ef4444; color: white;">
+            <button class="btn" onclick="salvarDelivery()" style="width: 100%; background: #ef4444; color: white; padding: 15px; font-size: 16px;">
                 <i class="fa-solid fa-bell"></i> Registrar e Avisar Morador
             </button>
         </div>
 
-        <div id="listaDelivery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+        <h3 style="margin: 0 0 15px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+            <i class="fa-solid fa-clock" style="color: #f59e0b;"></i> Aguardando Retirada
+        </h3>
+        <div id="listaDelivery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 30px;">
+        </div>
+
+        <h3 style="margin: 0 0 15px 0; color: #10b981; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+            <i class="fa-solid fa-check-double"></i> Últimos Entregues (Máx 6)
+        </h3>
+        <div id="listaDeliveryEntregues" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
         </div>
     </div>
     
