@@ -237,7 +237,8 @@ function mostrarEncomendas(){
         if(filtroData && e.dataChegada !== filtroData) return;
         
         if (filtroTexto) {
-            let textoBusca = `${e.morador} ${e.apto} ${e.codigo}`.toLowerCase();
+            // Adicionamos o e.id na busca! Assim a câmera escaneia o QR Code e acha a caixa na hora.
+            let textoBusca = `${e.morador} ${e.apto} ${e.codigo} ${e.id}`.toLowerCase();
             if (!textoBusca.includes(filtroTexto)) return;
         }
         
@@ -424,26 +425,24 @@ function imprimirEtiqueta(index){
     }
     let horaFormatada = e.horaChegada ? e.horaChegada : ""; 
     let vol = e.volumes || "1"; 
-    let ident = e.id || "Antigo";
+    let ident = e.id || "Sem_ID";
     
-    janela.document.write(`<html><head><title>Etiqueta Padrão</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:10px;margin:0;} h1{margin:5px 0;font-size:32px;border-bottom:2px solid #000;padding-bottom:5px;} h2{margin:10px 0 5px 0;font-size:20px;} p{margin:5px 0;font-size:16px;} .rodape{font-size:10px;margin-top:20px;color:#555;} .btn-imprimir{margin-top:30px;padding:12px 20px;background:#000;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-weight:bold;width:80%;} @media print{.btn-imprimir{display:none !important;}}</style></head><body><h1>AP ${e.apto}</h1><h2>${e.morador}</h2><p><b>Transp:</b> ${e.transportadora}</p><p><b>Vols:</b> ${vol}</p><p style="font-size: 14px; margin-top: 15px;">📅 ${dataFormatada} às ${horaFormatada}</p><p class="rodape">ID: ${ident}</p><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Etiqueta</button><p style="font-size: 11px; color: #888; margin-top: 5px;" class="btn-imprimir">Feche a janela após imprimir.</p><script> window.onload = function() { window.print(); }; window.onafterprint = function() { window.close(); }; <\/script></body></html>`);
+    // API que gera o QR Code na hora sem precisar instalar nada
+    let qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${ident}`;
+    
+    janela.document.write(`<html><head><title>Etiqueta Padrão</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:10px;margin:0;} h1{margin:5px 0;font-size:32px;border-bottom:2px solid #000;padding-bottom:5px;} h2{margin:10px 0 5px 0;font-size:20px;} p{margin:5px 0;font-size:16px;} .rodape{font-size:10px;margin-top:10px;color:#555;} .btn-imprimir{margin-top:20px;padding:12px 20px;background:#000;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-weight:bold;width:80%;} @media print{.btn-imprimir{display:none !important;}}</style></head><body><h1>AP ${e.apto}</h1><h2>${e.morador}</h2><p><b>Transp:</b> ${e.transportadora}</p><p><b>Vols:</b> ${vol}</p><img src="${qrCodeUrl}" style="margin-top: 10px; width: 120px; height: 120px; border: 2px solid #000; border-radius: 8px; padding: 5px;"><p style="font-size: 14px; margin-top: 5px;">📅 ${dataFormatada} às ${horaFormatada}</p><p class="rodape">ID: ${ident}</p><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Etiqueta</button><p style="font-size: 11px; color: #888; margin-top: 5px;" class="btn-imprimir">Feche a janela após imprimir.</p><script> window.onload = function() { setTimeout(() => window.print(), 600); }; window.onafterprint = function() { window.close(); }; <\/script></body></html>`);
     janela.document.close();
 }
 
 function imprimirSoQRCode(index){
     let e = encomendas[index]; 
     let janela = window.open("", "", "width=300,height=380"); 
-    let ident = e.id || "Antigo"; 
-    let qrImgTag = "";
+    let ident = e.id || "Sem_ID"; 
     
-    if(e.id && e.id !== "undefined") { 
-        let linkSistema = window.location.href.split("?")[0] + "?baixar=" + e.id; 
-        let tempCanvas = document.createElement("canvas"); 
-        new QRious({ element: tempCanvas, value: linkSistema, size: 200, level: "H" }); 
-        qrImgTag = `<img src="${tempCanvas.toDataURL()}" style="margin-bottom: 5px;">`; 
-    }
+    // API que gera o QR Code na hora sem precisar instalar nada
+    let qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${ident}`;
     
-    janela.document.write(`<html><head><title>Etiqueta QR Code</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;} .rodape{font-size:18px;font-weight:bold;margin:0;} .sub-rodape{font-size:12px;color:#555;margin-top:3px;} .btn-imprimir{margin-top:20px;padding:10px 20px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:bold;} @media print{.btn-imprimir{display:none !important;}}</style></head><body>${qrImgTag}<p class="rodape">AP ${e.apto}</p><p class="sub-rodape">ID: ${ident}</p><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir</button><script> window.onload = function() { window.print(); }; window.onafterprint = function() { window.close(); }; <\/script></body></html>`);
+    janela.document.write(`<html><head><title>Etiqueta QR Code</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;} .rodape{font-size:22px;font-weight:bold;margin:10px 0 0 0;} .sub-rodape{font-size:12px;color:#555;margin-top:3px;} .btn-imprimir{margin-top:20px;padding:10px 20px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:bold;} @media print{.btn-imprimir{display:none !important;}}</style></head><body><img src="${qrCodeUrl}" style="width: 200px; height: 200px;"><p class="rodape">AP ${e.apto}</p><p class="sub-rodape">ID: ${ident}</p><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir</button><script> window.onload = function() { setTimeout(() => window.print(), 600); }; window.onafterprint = function() { window.close(); }; <\/script></body></html>`);
     janela.document.close();
 }
 
