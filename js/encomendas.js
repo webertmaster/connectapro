@@ -446,3 +446,65 @@ function imprimirSoQRCode(index){
     janela.document.write(`<html><head><title>Etiqueta QR Code</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;} .rodape{font-size:18px;font-weight:bold;margin:0;} .sub-rodape{font-size:12px;color:#555;margin-top:3px;} .btn-imprimir{margin-top:20px;padding:10px 20px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:bold;} @media print{.btn-imprimir{display:none !important;}}</style></head><body>${qrImgTag}<p class="rodape">AP ${e.apto}</p><p class="sub-rodape">ID: ${ident}</p><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir</button><script> window.onload = function() { window.print(); }; window.onafterprint = function() { window.close(); }; <\/script></body></html>`);
     janela.document.close();
 }
+
+// ==========================================
+// LEITOR DE QR CODE (HTML5-QRCode)
+// ==========================================
+let html5QrCode;
+
+function iniciarLeitorQR() {
+    const boxCamera = document.getElementById('box-camera-qr');
+    if (boxCamera) boxCamera.style.display = 'block';
+
+    html5QrCode = new Html5Qrcode("leitor-qr");
+
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        },
+        (codigoLido, decodedResult) => {
+            // Toca um som de bipe rápido
+            tocarBipe();
+            
+            // Joga o código lido na barra de pesquisa e filtra
+            const barraPesquisa = document.getElementById('pesquisaEncomenda');
+            if (barraPesquisa) {
+                barraPesquisa.value = codigoLido;
+                if (typeof filtrarEncomendas === 'function') {
+                    filtrarEncomendas(); 
+                }
+            }
+            
+            fecharLeitorQR();
+            alert(`📦 Pacote Encontrado! Código: ${codigoLido}`);
+        },
+        (mensagemErro) => {
+            // Fica procurando em silêncio...
+        }
+    ).catch((err) => {
+        console.error("Erro na Câmera: ", err);
+        alert("⚠️ Erro ao abrir a câmera. Verifique se você deu permissão no navegador.");
+    });
+}
+
+function fecharLeitorQR() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('box-camera-qr').style.display = 'none';
+        }).catch(err => console.error("Erro ao desligar câmera", err));
+    } else {
+        document.getElementById('box-camera-qr').style.display = 'none';
+    }
+}
+
+function tocarBipe() {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = context.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, context.currentTime);
+    oscillator.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.1);
+}
