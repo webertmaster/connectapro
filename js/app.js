@@ -51,40 +51,73 @@ function toggleDarkMode() {
     localStorage.setItem('darkMode', isDark);
 }
 
-// --- DASHBOARD (CONTADORES COMPLETOS) ---
+// --- DASHBOARD (NUVEM + LOCAL) ---
 function atualizarDashboard() {
-    // Puxa os dados do armazenamento
-    const encomendas = JSON.parse(localStorage.getItem('encomendas')) || [];
+    // Pega a credencial do prédio
+    const meuCondominio = localStorage.getItem("condominioId");
+
+    // Trava de segurança da Nuvem
+    if (!meuCondominio || typeof db === 'undefined') {
+        console.log("⏳ Aguardando Firebase para atualizar a Dashboard...");
+        return;
+    }
+
+    // ==========================================
+    // ☁️ 1. MÓDULOS BLINDADOS (DIRETO DA NUVEM EM TEMPO REAL)
+    // ==========================================
+    
+    // Encomendas Pendentes
+    db.collection("encomendas").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let pendentes = 0;
+        snap.forEach(doc => { 
+            let enc = doc.data();
+            // Conta apenas se não estiver excluída e o status não for Entregue
+            if (!enc.excluido && enc.status !== 'Entregue') pendentes++; 
+        });
+        if(document.getElementById('dash-encomendas')) document.getElementById('dash-encomendas').textContent = pendentes;
+    });
+
+    // Veículos
+    db.collection("veiculos").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let total = 0;
+        snap.forEach(doc => { if (!doc.data().excluido) total++; });
+        if(document.getElementById('dash-veiculos')) document.getElementById('dash-veiculos').textContent = total;
+    });
+
+    // Moradores
+    db.collection("moradores").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let total = 0;
+        snap.forEach(doc => { if (!doc.data().excluido) total++; });
+        if(document.getElementById('dash-moradores')) document.getElementById('dash-moradores').textContent = total;
+    });
+
+    // Plantão / Passagens
+    db.collection("plantao").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
+        let total = 0;
+        snap.forEach(doc => { if (!doc.data().excluido) total++; });
+        if(document.getElementById('dash-plantao')) document.getElementById('dash-plantao').textContent = total;
+    });
+
+
+    // ==========================================
+    // 💾 2. MÓDULOS LOCAIS (Aguardando migração futura)
+    // ==========================================
     const ocorrencias = JSON.parse(localStorage.getItem('ocorrencias')) || [];
     const reservas = JSON.parse(localStorage.getItem('reservas')) || [];
     const equipe = JSON.parse(localStorage.getItem('equipe')) || [];
-    const veiculos = JSON.parse(localStorage.getItem('veiculos')) || [];
-    const moradores = JSON.parse(localStorage.getItem('moradores')) || [];
-    
-    // Novos módulos
-    const passagens = JSON.parse(localStorage.getItem('passagens')) || [];
     const pontos = JSON.parse(localStorage.getItem('pontos')) || [];
     const comunicados = JSON.parse(localStorage.getItem('comunicados')) || [];
 
-    // Filtros inteligentes
     const hoje = new Date().toISOString().split('T')[0];
     
-    const encomendasPendentes = encomendas.filter(e => e.status !== 'Entregue').length;
     const ocorrenciasAbertas = ocorrencias.filter(o => o.status !== '🟢 Resolvido').length;
     const reservasHoje = reservas.filter(r => r.data === hoje).length;
     const pontosHoje = pontos.filter(p => p.data === hoje).length;
     const comunicadosAtivos = comunicados.filter(c => c.status !== '🟢 Resolvido').length;
 
-    // Atualiza os números na tela (com verificação de segurança)
-    if(document.getElementById('dash-encomendas')) document.getElementById('dash-encomendas').textContent = encomendasPendentes;
     if(document.getElementById('dash-ocorrencias')) document.getElementById('dash-ocorrencias').textContent = ocorrenciasAbertas;
     if(document.getElementById('dash-reservas')) document.getElementById('dash-reservas').textContent = reservasHoje;
     if(document.getElementById('dash-equipe')) document.getElementById('dash-equipe').textContent = equipe.length;
-    if(document.getElementById('dash-veiculos')) document.getElementById('dash-veiculos').textContent = veiculos.length;
-    if(document.getElementById('dash-moradores')) document.getElementById('dash-moradores').textContent = moradores.length;
-    
-    // Novos cartões
-    if(document.getElementById('dash-plantao')) document.getElementById('dash-plantao').textContent = passagens.length;
     if(document.getElementById('dash-ponto')) document.getElementById('dash-ponto').textContent = pontosHoje;
     if(document.getElementById('dash-comunicados')) document.getElementById('dash-comunicados').textContent = comunicadosAtivos;
 }
@@ -92,7 +125,9 @@ function atualizarDashboard() {
 // --- INICIALIZAÇÃO ---
 window.onload = () => {
     atualizarRelogio();
-    atualizarDashboard();
+    
+    // Pequeno atraso (1.5s) para dar tempo do Firebase conectar antes de puxar a Dashboard
+    setTimeout(atualizarDashboard, 1500);
     
     // Recupera o tema escuro se o usuário tiver salvo no turno anterior
     if (localStorage.getItem('darkMode') === 'true') {
