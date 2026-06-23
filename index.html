@@ -69,6 +69,13 @@
                 <span id="dash-encomendas">0</span>
                 <p>Encomendas Pendentes</p>
             </div>
+
+            <div class="stat-card" style="border-bottom: 4px solid #f97316;">
+                <i class="fa-solid fa-motorcycle" style="color: #f97316;"></i>
+                <span id="dash-delivery">0</span>
+                <p>Delivery na Portaria</p>
+            </div>
+
             <div class="stat-card" style="border-bottom: 4px solid #ef4444;">
                 <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i>
                 <span id="dash-ocorrencias">0</span>
@@ -725,6 +732,13 @@
                 <h3 style="margin-bottom: 10px; color: #0f172a;">Ponto Digital</h3>
                 <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Vá à tela de Ponto e selecione o funcionário.</p>
                 <button class="btn" style="background: white; color: #f59e0b; border: 1px solid #fcd34d; width: 100%; margin: 0;" onclick="trocarTela('ponto');"><i class="fa-solid fa-arrow-right" style="margin-right: 5px;"></i> Ir para Tela de Ponto</button>
+            </div>
+
+            <div class="card" style="text-align: center; padding: 30px 20px; border-top: 4px solid #ef4444; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <i class="fa-solid fa-motorcycle" style="font-size: 40px; color: #ef4444; margin-bottom: 15px;"></i>
+                <h3 style="margin-bottom: 10px; color: #0f172a;">Delivery Rápido</h3>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Relatório do período (Máx 60 dias).</p>
+                <button class="btn" style="background: #ef4444; width: 100%; margin: 0;" onclick="gerarRelatorioDelivery(this)"><i class="fa-solid fa-cloud-arrow-down" style="margin-right: 5px;"></i> Extrair PDF</button>
             </div>
         </div>
     </div>
