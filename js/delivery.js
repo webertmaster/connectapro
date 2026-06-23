@@ -108,6 +108,7 @@ function salvarDelivery() {
         rgEntregador: rgEntregador || "Não informado",
         status: "Aguardando Morador",
         horaChegada: agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
+        dataConsulta: agora.toISOString().split('T')[0],
         timestamp: agora.getTime(),
         excluido: false,
         condominioId: meuCondominio
@@ -145,16 +146,41 @@ function finalizarDelivery(idFirebase) {
         db.collection("delivery").doc(idFirebase).update({
             status: "Entregue",
             horaEntrega: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
-            // NOTA: AQUI NÃO TEM MAIS O EXCLUIDO: TRUE, PRA ELE DESCER PRA PRATELEIRA!
         }).catch(err => alert("Erro ao dar baixa: " + err));
     }
 }
 
-// Nova função para o porteiro limpar a tela de entregues manualmente
 function arquivarDelivery(idFirebase) {
     if(confirm("Remover este pedido da tela principal?")) {
         db.collection("delivery").doc(idFirebase).update({ excluido: true }).catch(err => alert("Erro ao arquivar: " + err));
     }
+}
+
+// NOVA FUNÇÃO: ENSINAR O CÓDIGO APÓS O MORADOR RESPONDER NO ZAP
+function memorizarCodigo(idFirebase, apto) {
+    let codigoDigitado = prompt("O morador te passou o código no WhatsApp? Digite aqui para o sistema memorizar:");
+    if (!codigoDigitado) return;
+
+    const meuCondominio = localStorage.getItem("condominioId");
+
+    // 1. Atualiza o card atual para já mostrar o código na tela
+    db.collection("delivery").doc(idFirebase).update({
+        codigo: codigoDigitado
+    });
+
+    // 2. Grava na ficha do morador para as próximas entregas
+    db.collection("moradores")
+      .where("condominioId", "==", meuCondominio)
+      .where("apto", "==", apto)
+      .where("excluido", "==", false)
+      .get().then(snap => {
+          if(!snap.empty) {
+              db.collection("moradores").doc(snap.docs[0].id).update({
+                  codigoLembrado: codigoDigitado
+              });
+              alert("🧠 Código salvo! Nas próximas vezes que você digitar esse apartamento, eu vou puxar esse código automaticamente!");
+          }
+      }).catch(err => console.log(err));
 }
 
 function mostrarDelivery() {
@@ -204,18 +230,21 @@ function mostrarDelivery() {
                     ${infoEntregador}
                     ${d.codigo && d.codigo !== "Não informado" ? `<p style="margin: 0; color: #059669; margin-top: 5px; font-size: 16px;"><strong>Código:</strong> ${d.codigo}</p>` : ''}
                 </div>
+                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <button onclick="enviarAvisoDelivery('${d.idFirebase}')" style="background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-                        <i class="fa-brands fa-whatsapp"></i> Cobrar
+                        <i class="fa-brands fa-whatsapp"></i> Avisar
                     </button>
                     <button onclick="finalizarDelivery('${d.idFirebase}')" style="background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
                         <i class="fa-solid fa-check-double"></i> Dar Baixa
+                    </button>
+                    <button onclick="memorizarCodigo('${d.idFirebase}', '${d.apto}')" style="grid-column: 1 / -1; background: #f8fafc; border: 1px dashed #94a3b8; color: #475569; padding: 8px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                        <i class="fa-solid fa-brain" style="color: #8b5cf6;"></i> Morador passou o código? Clique para salvar
                     </button>
                 </div>
             </div>`;
         } 
         else {
-            // SÓ RENDERIZA SE FOR UM DOS ÚLTIMOS 6 PEDIDOS
             if (contEntregues < 6) {
                 contEntregues++;
                 listaEntregues.innerHTML += `
@@ -242,4 +271,93 @@ function mostrarDelivery() {
 
     if (contAguardando === 0) listaAguardando.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #94a3b8; font-style: italic; border: 1px dashed #cbd5e1; border-radius: 8px;">Nenhum delivery aguardando.</div>';
     if (contEntregues === 0) listaEntregues.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #94a3b8; font-style: italic; border: 1px dashed #cbd5e1; border-radius: 8px;">Nenhum histórico recente.</div>';
+}
+
+// RELATÓRIO PDF COM TRAVA DE 60 DIAS
+function gerarRelatorioDelivery(btn) {
+    const dataInicio = document.getElementById('relDataInicio').value;
+    const dataFim = document.getElementById('relDataFim').value;
+
+    if (!dataInicio || !dataFim) {
+        alert('⚠️ Selecione a Data Inicial e a Data Final no topo da tela de relatórios!');
+        return;
+    }
+
+    const d1 = new Date(dataInicio);
+    const d2 = new Date(dataFim);
+    const diferencaTempo = Math.abs(d2 - d1);
+    const diferencaDias = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
+
+    if (d1 > d2) {
+        alert('⚠️ A Data Inicial não pode ser maior que a Data Final.');
+        return;
+    }
+
+    if (diferencaDias > 60) {
+        alert('🚨 Acesso Negado: Para evitar travamentos, o sistema permite puxar no máximo 60 dias por relatório. Diminua o período e tente novamente.');
+        return;
+    }
+
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Puxando da Nuvem...';
+    btn.style.pointerEvents = 'none';
+
+    const meuCondominio = localStorage.getItem("condominioId");
+
+    db.collection("delivery")
+        .where("condominioId", "==", meuCondominio)
+        .where("dataConsulta", ">=", dataInicio)
+        .where("dataConsulta", "<=", dataFim)
+        .get()
+        .then((snapshot) => {
+            if (snapshot.empty) {
+                alert('Nenhum registro de delivery encontrado neste período.');
+                btn.innerHTML = textoOriginal;
+                btn.style.pointerEvents = 'auto';
+                return;
+            }
+
+            let listaRelatorio = [];
+            snapshot.forEach(doc => listaRelatorio.push(doc.data()));
+            listaRelatorio.sort((a, b) => a.timestamp - b.timestamp);
+
+            let dadosPdf = listaRelatorio.map(d => {
+                let dataF = d.dataConsulta.split('-').reverse().join('/');
+                let statusTxt = d.status === "Entregue" ? `Entregue ${d.horaEntrega}` : "Pendente";
+                let infoEntregador = d.entregador !== "Não informado" ? d.entregador : '--';
+                
+                return [ dataF, d.apto, d.morador, d.plataforma, d.horaChegada, infoEntregador, statusTxt ];
+            });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            doc.setFontSize(16);
+            doc.setTextColor(15, 23, 42);
+            doc.text(`Relatório de Auditoria - Delivery Rápido`, 14, 20);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Período de Extração: ${dataInicio.split('-').reverse().join('/')} a ${dataFim.split('-').reverse().join('/')} (Total: ${listaRelatorio.length} registros)`, 14, 28);
+
+            doc.autoTable({
+                startY: 35,
+                head: [['Data', 'Apto / Bloco', 'Morador', 'Aplicativo', 'Chegada', 'Entregador', 'Status']],
+                body: dadosPdf,
+                theme: 'striped',
+                styles: { fontSize: 9, cellPadding: 4 },
+                headStyles: { fillColor: [239, 68, 68] },
+                alternateRowStyles: { fillColor: [248, 250, 252] }
+            });
+
+            doc.save(`Auditoria_Delivery_${dataInicio}_a_${dataFim}.pdf`);
+            
+            btn.innerHTML = textoOriginal;
+            btn.style.pointerEvents = 'auto';
+        })
+        .catch(err => {
+            alert("Erro ao extrair relatório: " + err);
+            btn.innerHTML = textoOriginal;
+            btn.style.pointerEvents = 'auto';
+        });
 }
