@@ -10,8 +10,6 @@ let idPlantaoEditando = null;
 // 1. ESCUTADOR EM TEMPO REAL (NUVEM COM FILTRO DE CONDOMÍNIO)
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-    atualizarSelectPorteiroPassagem();
-    
     // 1. Pega a credencial do prédio no bolso do navegador
     const meuCondominio = localStorage.getItem("condominioId");
 
@@ -21,6 +19,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if(typeof db !== 'undefined') {
+        // [BLINDAGEM] ESCUTADOR DE EQUIPE EM TEMPO REAL PARA ALIMENTAR OS SELECTS
+        db.collection("equipe").where("condominioId", "==", meuCondominio).onSnapshot((snapshot) => {
+            let equipeData = [];
+            snapshot.forEach((doc) => {
+                let f = doc.data();
+                if (!f.excluido) { // Só traz os funcionários ativos
+                    equipeData.push(f);
+                }
+            });
+            // Alimenta os menus de escolha do plantão com a lista atualizada vinda da nuvem
+            executarAlimentacaoSelects(equipeData);
+        });
+
         // 2. MÁGICA MULTI-TENANT: Onde condominioId for igual ao meuCondominio
         db.collection("passagem").where("condominioId", "==", meuCondominio).onSnapshot((snapshot) => {
             passagensGlobais = [];
@@ -39,30 +50,29 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function atualizarSelectPorteiroPassagem() {
-    let equipe = [];
-    if (typeof equipeGlobais !== 'undefined' && equipeGlobais.length > 0) {
-        equipe = equipeGlobais;
-    } else {
-        equipe = JSON.parse(localStorage.getItem('equipe')) || [];
-    }
-
+// Função interna que reconstrói os menus dropdown com os dados reais da nuvem
+function executarAlimentacaoSelects(listaFuncionarios) {
     const filtroPlantao = document.getElementById('filtroPorteiroPassagem');
     const selectNome = document.getElementById('passagemNome');
     
     if(filtroPlantao) {
         filtroPlantao.innerHTML = '<option value="">Todos os Porteiros</option>';
-        equipe.forEach(f => {
+        listaFuncionarios.forEach(f => {
             filtroPlantao.innerHTML += `<option value="${f.nome}">${f.nome}</option>`;
         });
     }
 
     if(selectNome) {
         selectNome.innerHTML = '<option value="" disabled selected>👤 Selecione o seu Nome (Porteiro que está saindo)</option>';
-        equipe.forEach(f => {
+        listaFuncionarios.forEach(f => {
             selectNome.innerHTML += `<option value="${f.nome}">${f.nome} (${f.cargo})</option>`;
         });
     }
+}
+
+// Mantido por compatibilidade com outros arquivos do sistema que possam chamá-la
+function atualizarSelectPorteiroPassagem() {
+    console.log("Connecta Pro: Selects de porteiros sincronizados via escutador ativo da nuvem.");
 }
 
 // ==========================================
@@ -87,8 +97,6 @@ function salvarPassagem() {
     };
 
     const agora = new Date();
-    
-    // Pega a credencial para carimbar o documento
     const meuCondominio = localStorage.getItem("condominioId");
 
     const dadosPlantao = {
@@ -97,10 +105,10 @@ function salvarPassagem() {
         checkList: checkList,
         data: agora.toISOString().split('T')[0],
         hora: agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
-        condominioId: meuCondominio // A ETIQUETA INVISÍVEL FICA PRESA AQUI!
+        condominioId: meuCondominio
     };
 
-    const btnNode = document.querySelector("#plantao .btn[onclick='salvarPassagem()']");
+    const btnNode = document.querySelector("#passagem .btn[onclick='salvarPassagem()']");
 
     if (idPlantaoEditando) {
         // MODO EDIÇÃO
@@ -108,8 +116,8 @@ function salvarPassagem() {
             alert('🔄 Turno atualizado com sucesso!');
             idPlantaoEditando = null;
             if(btnNode) {
-                btnNode.innerHTML = "<i class='fa-solid fa-clipboard-check'></i> Passar Serviço (Salvar)";
-                btnNode.style.background = "#3b82f6";
+                btnNode.innerHTML = "<i class='fa-solid fa-arrow-right-arrow-left'></i> Finalizar e Passar Serviço";
+                btnNode.style.background = "#10b981";
             }
             limparFormularioPassagem();
         }).catch(err => alert("Erro ao editar: " + err));
@@ -149,10 +157,10 @@ function prepararEdicaoPlantao(index) {
     document.getElementById('chkBombas').checked = chk.bombas !== false;
     document.getElementById('chkEnergia').checked = chk.Energia !== false;
 
-    const btnNode = document.querySelector("#plantao .btn[onclick='salvarPassagem()']");
+    const btnNode = document.querySelector("#passagem .btn[onclick='salvarPassagem()']");
     if(btnNode) {
         btnNode.innerHTML = "<i class='fa-solid fa-floppy-disk'></i> Salvar Alterações";
-        btnNode.style.background = "#10b981"; // Verde para alertar edição
+        btnNode.style.background = "#3b82f6"; // Azul de destaque para alteração
     }
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -183,7 +191,6 @@ function mostrarPassagens() {
     lista.innerHTML = '';
     let filtrados = passagensGlobais;
 
-    // LÊ O CRACHÁ PARA DEFINIR A PERMISSÃO DOS BOTÕES
     const cargo = localStorage.getItem("usuario_cargo");
 
     if (filtroPorteiro) filtrados = filtrados.filter(p => p.porteiro === filtroPorteiro);
@@ -199,9 +206,7 @@ function mostrarPassagens() {
 
     const defaultsCheck = { portoes: true, elevadores: true, luzes: true, cameras: true, bombas: true, Energia: true };
 
-    passagensGlobais.forEach((p, index) => {
-        if (p.excluido === true) return; // Soft Delete: Oculta da tela, preserva nos relatórios
-
+    ativos.forEach((p, index) => {
         const dataF = p.data ? p.data.split('-').reverse().join('/') : "Data Indefinida";
         const horaF = p.hora || "--:--";
         const dataFormatada = `${dataF} às ${horaF}`;
@@ -223,7 +228,6 @@ function mostrarPassagens() {
             ${renderBadge(chk.Energia, 'Energia')}
         `;
 
-        // BLINDAGEM DOS BOTÕES DE GESTÃO (EDITAR/ARQUIVAR)
         let botoesGestaoHtml = '';
         if (cargo === 'operacional') {
             botoesGestaoHtml = `
@@ -294,7 +298,6 @@ function gerarRelatorioPassagem() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    // O Relatório agora lê da NUVEM (passagensGlobais) e ignora a exclusão para fins de auditoria
     if (passagensGlobais.length === 0) {
         alert("⚠️ Não há registros de plantão na nuvem para gerar o PDF.");
         return;
