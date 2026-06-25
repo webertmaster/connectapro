@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connecta Pro - Meu Perfil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css"> 
+    <style>
+        /* Estilos rápidos para garantir um layout limpo */
+        .perfil-container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #1e293b;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group input:disabled {
+            background-color: #f1f5f9;
+            cursor: not-allowed;
+        }
+        .btn-salvar {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .btn-salvar:hover {
+            background-color: #2563eb;
+        }
+        .seccao-divisoria {
+            margin: 30px 0 20px 0;
+            border-top: 2px dashed #e2e8f0;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <div class="perfil-container">
+            <h2><i class="fa-solid fa-user-gear text-blue"></i> Meu Perfil</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">Gerencie as suas informações de acesso e dados de contacto.</p>
+
+            <form id="formDadosPessoais">
+                <div class="form-group">
+                    <label for="perfilEmail">E-mail de Acesso (Não alterável)</label>
+                    <input type="email" id="perfilEmail" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label for="perfilNome">Nome Completo</label>
+                    <input type="text" id="perfilNome" required placeholder="Carregando...">
+                </div>
+
+                <div class="form-group">
+                    <label for="perfilWhatsapp">WhatsApp / Telefone</label>
+                    <input type="text" id="perfilWhatsapp" required placeholder="(00) 00000-0000">
+                </div>
+
+                <button type="submit" id="btnSalvarDados" class="btn-salvar">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Alterações
+                </button>
+            </form>
+
+            <div class="seccao-divisoria">
+                <h3><i class="fa-solid fa-lock text-red"></i> Alterar Senha de Acesso</h3>
+                <p style="color: #64748b; font-size: 13px; margin-bottom: 15px;">Por segurança, escolha uma senha forte com mais de 6 caracteres.</p>
+            </div>
+
+            <form id="formAlterarSenha">
+                <div class="form-group">
+                    <label for="novaSenha">Nova Senha</label>
+                    <input type="password" id="novaSenha" required placeholder="Digite a nova senha">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmarNovaSenha">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmarNovaSenha" required placeholder="Repita a nova senha">
+                </div>
+
+                <button type="submit" id="btnSalvarSenha" class="btn-salvar" style="background-color: #ef4444;">
+                    <i class="fa-solid fa-key"></i> Atualizar Senha
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.x.x/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.x.x/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script> <script src="js/perfil.js"></script>
+</body>
+</html>
