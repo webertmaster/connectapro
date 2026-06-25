@@ -44,6 +44,9 @@
         
         <button onclick="trocarTela('relatorios')" id="menu-relatorios" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; color: #38bdf8;"><i class="fa-solid fa-chart-line"></i> Relatórios</button>
         
+        <button onclick="trocarTela('perfil')" id="menu-perfil" style="color: #cbd5e1;"><i class="fa-solid fa-user-gear"></i> Meu Perfil</button>
+        <button onclick="trocarTela('ajuda')" id="menu-ajuda" style="color: #cbd5e1;"><i class="fa-solid fa-headset"></i> Ajuda / Suporte</button>
+        
         <button onclick="deslogarSistema()" id="menu-sair" style="margin-top: 10px; color: #ef4444;"><i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema</button>
     </div>
 </div>
@@ -744,7 +747,102 @@
         </div>
     </div>
 
-</div> <div id="modalMorador" class="modal-overlay">
+    <div id="perfil" class="tela">
+        <div class="box" style="max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1e293b; margin-bottom: 20px;"><i class="fa-solid fa-user-gear" style="color: #3b82f6;"></i> Meu Perfil</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">Gerencie as suas informações de acesso e dados de contato.</p>
+
+            <form id="formDadosPessoais">
+                <div style="margin-bottom: 15px;">
+                    <label for="perfilEmail" style="display: block; font-weight: 600; margin-bottom: 5px;">E-mail de Acesso (Não alterável)</label>
+                    <input type="email" id="perfilEmail" disabled style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f1f5f9; cursor: not-allowed;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label for="perfilNome" style="display: block; font-weight: 600; margin-bottom: 5px;">Nome Completo</label>
+                    <input type="text" id="perfilNome" required placeholder="Carregando..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label for="perfilWhatsapp" style="display: block; font-weight: 600; margin-bottom: 5px;">WhatsApp / Telefone</label>
+                    <input type="text" id="perfilWhatsapp" required placeholder="(00) 00000-0000" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+
+                <button type="submit" id="btnSalvarDados" style="background-color: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Alterações
+                </button>
+            </form>
+
+            <div style="margin: 30px 0 20px 0; border-top: 2px dashed #e2e8f0; padding-top: 20px;">
+                <h3><i class="fa-solid fa-lock" style="color: #ef4444;"></i> Alterar Senha de Acesso</h3>
+                <p style="color: #64748b; font-size: 13px; margin-bottom: 15px;">Por segurança, escolha uma senha forte com mais de 6 caracteres.</p>
+            </div>
+
+            <form id="formAlterarSenha">
+                <div style="margin-bottom: 15px;">
+                    <label for="novaSenha" style="display: block; font-weight: 600; margin-bottom: 5px;">Nova Senha</label>
+                    <input type="password" id="novaSenha" required placeholder="Digite a nova senha" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label for="confirmarNovaSenha" style="display: block; font-weight: 600; margin-bottom: 5px;">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmarNovaSenha" required placeholder="Repita a nova senha" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </div>
+
+                <button type="submit" id="btnSalvarSenha" style="background-color: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">
+                    <i class="fa-solid fa-key"></i> Atualizar Senha
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="ajuda" class="tela">
+        <div class="box" style="max-width: 600px; margin: 0 auto; border-top: 4px solid #3b82f6;">
+            <h2 style="color: #1e293b; margin-bottom: 10px;"><i class="fa-solid fa-headset" style="color: #3b82f6;"></i> Suporte Connecta Pro</h2>
+            <p style="color: #64748b; margin-bottom: 25px; font-size: 14px;">Precisa de ajuda ou encontrou algum problema? Abra um chamado direto com a nossa equipe técnica (Zero Labs).</p>
+
+            <form id="formSuporte">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1e293b;">Assunto da Ajuda</label>
+                    <select id="supAssunto" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 14px; color: #334155;">
+                        <option value="" disabled selected>Selecione o motivo...</option>
+                        <option value="Dúvida no Sistema">Dúvida no Sistema</option>
+                        <option value="Erro / Bug na Tela">Erro / Bug na Tela</option>
+                        <option value="Sugestão de Melhoria">Sugestão de Melhoria</option>
+                        <option value="Problema com Login/Senha">Problema com Login/Senha</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1e293b;">Prioridade</label>
+                    <select id="supPrioridade" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 14px; color: #334155;">
+                        <option value="Baixa">🟢 Baixa (Pode esperar)</option>
+                        <option value="Média" selected>🟡 Média (Incomoda, mas dá pra usar)</option>
+                        <option value="Alta">🔴 Alta (Sistema travado / Crítico)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1e293b;">Descreva o Problema</label>
+                    <textarea id="supMensagem" required placeholder="Explique com detalhes o que aconteceu ou a sua dúvida..." style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; min-height: 120px; font-size: 14px; color: #334155; font-family: inherit;"></textarea>
+                </div>
+
+                <button type="submit" id="btnEnviarSuporte" class="btn" style="background-color: #3b82f6; color: white; width: 100%; padding: 15px; font-size: 16px; font-weight: bold; margin: 0;">
+                    <i class="fa-solid fa-paper-plane"></i> Enviar Chamado
+                </button>
+            </form>
+
+            <div style="margin-top: 30px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1; text-align: center;">
+                <p style="margin: 0; color: #475569; font-size: 14px;">
+                    <i class="fa-brands fa-whatsapp" style="color: #10b981; font-size: 18px;"></i> 
+                    Atendimento Urgente? <strong>(84) 90000-0000</strong>
+                </p>
+                <small style="color: #94a3b8;">Segunda a Sexta, das 08h às 18h</small>
+            </div>
+        </div>
+    </div>
+    </div> <div id="modalMorador" class="modal-overlay">
     <div class="modal-content">
         <button class="fechar-modal" onclick="fecharModalMorador()"><i class="fa-solid fa-xmark"></i></button>
         <div id="conteudoModalMorador"></div>
@@ -764,8 +862,11 @@
         <div id="conteudoModalVeiculo"></div>
     </div>
 </div>
+
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCY6Jq9GVYJEQrH0JZ9TAWcQVm-cImiwoc",
@@ -775,10 +876,9 @@
         messagingSenderId: "948781126590",
         appId: "1:948781126590:web:5e8888eb6e8124f7df5fef"
     };
-    // Inicializa o Firebase no sistema principal
     firebase.initializeApp(firebaseConfig);
-    // Cria a variável 'db' que vai ser usada por todos os seus arquivos JS
     const db = firebase.firestore();
+    const auth = firebase.auth();
 </script>
 
 <script src="js/app.js"></script>
@@ -794,8 +894,8 @@
 <script src="js/relatorios.js"></script>
 <script src="js/limpeza.js"></script>
 <script src="js/delivery.js"></script>
-
-<script>
+<script src="js/perfil.js"></script>
+<script src="js/ajuda.js"></script> <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
