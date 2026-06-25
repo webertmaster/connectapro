@@ -72,9 +72,12 @@ function gerarRelatorioFiltrado(modulo, exigeData, btnBotao) {
         montarPDF(modulo, dadosFiltrados, dataInicio, dataFim, exigeData);
 
     }).catch(err => {
+        // AQUI ESTÁ A SALVAÇÃO PARA O ERRO DE ÍNDICE:
+        console.error("LINK DO ÍNDICE FIREBASE --->", err);
+        
         btnBotao.innerHTML = textoOriginal;
         btnBotao.style.pointerEvents = "auto";
-        alert("Erro ao buscar no banco de dados: " + err);
+        alert("Erro ao buscar no banco de dados (olhe o console F12 para o link do índice).");
     });
 }
 
@@ -143,12 +146,23 @@ function montarPDF(modulo, dados, dataInicio, dataFim, exigeData) {
         dados.forEach(d => {
             linhas.push([d.nome || "-", d.cargo || "-"]);
         });
+    } else if (modulo === 'delivery') { // O NOVO BLOCO DO DELIVERY!
+        colunas = ["Apto/Bloco", "Morador", "Entregador", "Código", "App"];
+        dados.forEach(d => {
+            linhas.push([
+                d.apto || "-", 
+                d.morador || "-", 
+                d.nomeEntregador || d.entregador || "Não inf.", 
+                d.codigo || "-",
+                d.app || "Não inf."
+            ]);
+        });
     }
 
     doc.autoTable({
         startY: 90,
         head: [colunas],
-        body: lines = linhas,
+        body: linhas,
         theme: 'grid',
         headStyles: { fillColor: [59, 130, 246] }, 
         styles: { fontSize: 10, cellPadding: 5 }
