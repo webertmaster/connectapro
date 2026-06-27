@@ -1,5 +1,5 @@
 // ==========================================
-// ZERO LABS - CONNECTA PRO (NUVEM FIREBASE)
+// ZERO LABS - CONDO UP (NUVEM FIREBASE)
 // plantao.js - Passagem de Turno Premium (MULTI-TENANT ATIVO)
 // ==========================================
 
@@ -72,7 +72,7 @@ function executarAlimentacaoSelects(listaFuncionarios) {
 
 // Mantido por compatibilidade com outros arquivos do sistema que possam chamá-la
 function atualizarSelectPorteiroPassagem() {
-    console.log("Connecta Pro: Selects de porteiros sincronizados via escutador ativo da nuvem.");
+    console.log("Condo Up: Selects de porteiros sincronizados via escutador ativo da nuvem.");
 }
 
 // ==========================================
@@ -306,7 +306,7 @@ function gerarRelatorioPassagem() {
     doc.setFontSize(16);
     doc.text("Livro de Plantão e Auditoria", 14, 20);
     doc.setFontSize(10);
-    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Connecta Pro`, 14, 26);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Condo up`, 14, 26);
     
     const defaultsCheck = { portoes: true, elevadores: true, luzes: true, cameras: true, bombas: true, Energia: true };
 
