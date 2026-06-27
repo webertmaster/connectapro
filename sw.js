@@ -1,9 +1,9 @@
 // ==========================================
-// ZERO LABS - SERVICE WORKER INTELIGENTE
+// CONDO UP - SERVICE WORKER INTELIGENTE
 // sw.js - Cache dinâmico com Salvo-Conduto para APIs
 // ==========================================
 
-const CACHE_NAME = 'connecta-pro-v3';
+const CACHE_NAME = 'condo-up-v4';
 
 self.addEventListener('install', event => {
     self.skipWaiting(); // Força a instalação imediata da nova versão
