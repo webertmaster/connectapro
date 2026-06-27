@@ -1,11 +1,11 @@
 // ==========================================
-// CONNECTA PRO - O SEGURANÇA DA PORTA
+// CONDO UP - O SEGURANÇA DA PORTA
 // auth.js - Controle de Acesso e Hierarquia
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. VERIFICA O CRACHÁ DE ACESSO
-    const isLogado = localStorage.getItem("connectapro_logado");
+    // 1. VERIFICA O CRACHÁ DE ACESSO (CORRIGIDO AQUI!)
+    const isLogado = localStorage.getItem("condoup_logado");
     const paginaAtual = window.location.pathname;
 
     // Se NÃO tem crachá e NÃO está na tela de login, chuta para fora!
@@ -60,7 +60,7 @@ function aplicarRegrasDeCargo() {
 function deslogarSistema() {
     if(confirm("Deseja realmente sair do sistema?")) {
         // Rasga o crachá e limpa a memória
-        localStorage.removeItem("connectapro_logado");
+        localStorage.removeItem("condoup_logado");
         localStorage.removeItem("usuario_id");
         localStorage.removeItem("usuario_nome");
         localStorage.removeItem("usuario_cargo");
