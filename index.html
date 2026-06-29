@@ -580,13 +580,15 @@
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                     <div>
-                        <label>Apto / Bloco</label>
-                        <input type="text" id="delApto" placeholder="Ex: 201">
-                    </div>
-                    <div>
-                        <label>Morador Responsável</label>
-                        <input type="text" id="delMorador" placeholder="Ex: João Silva">
-                    </div>
+    <label>Apto / Bloco</label>
+    <select id="delApto" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white;">
+        <option value="">Selecione o Apto...</option>
+    </select>
+</div>
+<div>
+    <label>Morador Responsável</label>
+    <input type="text" id="delMorador" placeholder="Aguardando escolha do Apto..." readonly style="background: #f8fafc; width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+</div>
                     <div>
                         <label>Aplicativo</label>
                         <input type="text" id="delPlataforma" placeholder="Ex: iFood, Rappi...">
