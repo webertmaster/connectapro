@@ -4,6 +4,7 @@
 // ==========================================
 
 let deliveryGlobais = [];
+let memoriaDominóMoradores = []; // Motor do Dominó
 
 const logosDelivery = {
     "ifood": "https://logodownload.org/wp-content/uploads/2017/05/ifood-logo-0.png",
@@ -18,7 +19,41 @@ const logosDelivery = {
     "mercado": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png"
 };
 
+// NOVA FUNÇÃO UNIVERSAL: INJETA OS APARTAMENTOS NO SELECT
+async function carregarApartamentosNoSelect(idSelectDestino) {
+    const meuCondominio = localStorage.getItem("condominioId");
+    const select = document.getElementById(idSelectDestino);
+    if (!meuCondominio || !select || typeof db === 'undefined') return;
+
+    try {
+        const snap = await db.collection("moradores")
+            .where("condominioId", "==", meuCondominio)
+            .where("excluido", "==", false)
+            .get();
+
+        memoriaDominóMoradores = [];
+        select.innerHTML = '<option value="">Selecione o Apto...</option>';
+
+        snap.forEach(doc => memoriaDominóMoradores.push(doc.data()));
+
+        // Organiza em ordem alfabética bonita na tela (101 A, 101 B, 102 A...)
+        memoriaDominóMoradores.sort((a, b) => (a.apto || "").localeCompare(b.apto || ""));
+
+        memoriaDominóMoradores.forEach(m => {
+            let opt = document.createElement('option');
+            opt.value = m.apto;
+            opt.textContent = `Apto ${m.apto} - ${m.nome}`; // Exibe: "Apto 101 - Carlos"
+            select.appendChild(opt);
+        });
+
+    } catch (e) {
+        console.error("Erro ao carregar lista de apartamentos:", e);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+    carregarApartamentosNoSelect('delApto'); // <-- GATILHO ATIVADO AQUI
+
     const meuCondominio = localStorage.getItem("condominioId");
     if (!meuCondominio || typeof db === 'undefined') return;
 
@@ -36,7 +71,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const inputAptoDelivery = document.getElementById('delApto');
     if (inputAptoDelivery) {
-        inputAptoDelivery.addEventListener('blur', function() {
+        inputAptoDelivery.addEventListener('change', function() { // <-- ATUALIZADO PARA CHANGE
             const aptoDigitado = this.value.trim();
             const boxCodigo = document.getElementById('boxCodigoOculto');
             const textoCodigo = document.getElementById('delCodigoFixo');
@@ -121,7 +156,7 @@ function salvarDelivery() {
               });
         }
         document.getElementById('delMorador').value = '';
-        document.getElementById('delApto').value = '';
+        document.getElementById('delApto').value = ''; // Reseta o Select pro "Selecione..."
         document.getElementById('delPlataforma').value = '';
         if(inputCodigo) inputCodigo.value = '';
         if(inputEntregador) inputEntregador.value = '';
@@ -156,19 +191,16 @@ function arquivarDelivery(idFirebase) {
     }
 }
 
-// NOVA FUNÇÃO: ENSINAR O CÓDIGO APÓS O MORADOR RESPONDER NO ZAP
 function memorizarCodigo(idFirebase, apto) {
     let codigoDigitado = prompt("O morador te passou o código no WhatsApp? Digite aqui para o sistema memorizar:");
     if (!codigoDigitado) return;
 
     const meuCondominio = localStorage.getItem("condominioId");
 
-    // 1. Atualiza o card atual para já mostrar o código na tela
     db.collection("delivery").doc(idFirebase).update({
         codigo: codigoDigitado
     });
 
-    // 2. Grava na ficha do morador para as próximas entregas
     db.collection("moradores")
       .where("condominioId", "==", meuCondominio)
       .where("apto", "==", apto)
@@ -273,7 +305,6 @@ function mostrarDelivery() {
     if (contEntregues === 0) listaEntregues.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #94a3b8; font-style: italic; border: 1px dashed #cbd5e1; border-radius: 8px;">Nenhum histórico recente.</div>';
 }
 
-// RELATÓRIO PDF COM TRAVA DE 60 DIAS
 function gerarRelatorioDelivery(btn) {
     const dataInicio = document.getElementById('relDataInicio').value;
     const dataFim = document.getElementById('relDataFim').value;
