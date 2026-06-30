@@ -3,6 +3,42 @@
 // app.js - Núcleo do Sistema (Menu, Relógio e Dashboard)
 // ==========================================
 
+// --- MOTOR UNIVERSAL DO DOMINÓ (COMPARTILHADO PARA TODO O PRÉDIO) ---
+let memoriaDominóMoradores = []; 
+
+async function carregarApartamentosNoSelect(idSelectDestino) {
+    const meuCondominio = localStorage.getItem("condominioId");
+    const select = document.getElementById(idSelectDestino);
+    if (!meuCondominio || !select || typeof db === 'undefined') return;
+
+    try {
+        const snap = await db.collection("moradores")
+            .where("condominioId", "==", meuCondominio)
+            .where("excluido", "==", false)
+            .get();
+
+        memoriaDominóMoradores = [];
+        select.innerHTML = '<option value="">Selecione o Apto...</option>';
+
+        snap.forEach(doc => memoriaDominóMoradores.push(doc.data()));
+
+        // Organiza em ordem alfabética bonita na tela (101 A, 101 B, 102 A...)
+        memoriaDominóMoradores.sort((a, b) => (a.apto || "").localeCompare(b.apto || ""));
+
+        memoriaDominóMoradores.forEach(m => {
+            let opt = document.createElement('option');
+            opt.value = m.apto;
+            opt.textContent = `Apto ${m.apto} - ${m.nome}`; // Exibe: "Apto 101 - Carlos"
+            select.appendChild(opt);
+        });
+
+        console.log(`✅ Select [${idSelectDestino}] recheado com ${memoriaDominóMoradores.length} apartamentos!`);
+
+    } catch (e) {
+        console.error("Erro ao carregar lista de apartamentos no motor universal:", e);
+    }
+}
+
 // --- CONTROLE UNIVERSAL DE MENUS E TELAS (BLINDADO) ---
 function trocarTela(telaId) {
     // Esconde todas as telas do sistema de forma limpa
@@ -38,20 +74,26 @@ function trocarTela(telaId) {
     
     // Blindagem para a garagem carregar corretamente
     if(telaId === 'veiculos' && typeof mostrarVeiculos === 'function') mostrarVeiculos();
+
+    // 🚀 INJEÇÃO DE GATILHOS DOMINÓ: Força os selects a atualizarem os moradores na hora que abre a aba!
+    if(telaId === 'delivery' && typeof carregarApartamentosNoSelect === 'function') carregarApartamentosNoSelect('delApto');
+    if(telaId === 'encomendas' && typeof carregarApartamentosNoSelect === 'function') carregarApartamentosNoSelect('encApto');
+    if(telaId === 'ocorrencias' && typeof carregarApartamentosNoSelect === 'function') carregarApartamentosNoSelect('ocoApto');
+    if(telaId === 'reservas' && typeof carregarApartamentosNoSelect === 'function') carregarApartamentosNoSelect('aptoReserva');
 }
 
 // --- RELÓGIO EM TEMPO REAL ---
 function atualizarRelogio() {
     const agora = new Date();
     const horas = String(agora.getHours()).padStart(2, '0');
-    const minutos = String(agora.getMinutes()).padStart(2, '0');
+    const minutes = String(agora.getMinutes()).padStart(2, '0');
     const segundos = String(agora.getSeconds()).padStart(2, '0');
     const elRelogio = document.getElementById('relogio');
-    if(elRelogio) elRelogio.textContent = `${horas}:${minutos}:${segundos}`;
+    if(elRelogio) elRelogio.textContent = `${horas}:${minutes}:${segundos}`;
 }
 setInterval(atualizarRelogio, 1000);
 
-// --- MODO ESCURO (DARK MODE) ---
+// --- MOTO ESCURO (DARK MODE) ---
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
     const isDark = document.body.classList.contains('dark-mode');
@@ -83,17 +125,15 @@ function atualizarDashboard() {
         if(document.getElementById('dash-encomendas')) document.getElementById('dash-encomendas').textContent = pendentes;
     });
 
-    // 2. CONTADOR DE DELIVERIES PENDENTES HOJE (MÓDULO NOVO)
+    // 2. CONTADOR DE DELIVERIES PENDENTES HOJE
     db.collection("delivery").where("condominioId", "==", meuCondominio).onSnapshot(snap => {
         let delPendentes = 0;
         snap.forEach(doc => {
             let d = doc.data();
-            // Conta apenas os que estão aguardando o morador na portaria e não foram excluídos
             if (!d.excluido && (d.status === "Aguardando Morador" || d.status === "Aguardando")) {
                 delPendentes++;
             }
         });
-        // Atualiza o contador na Dashboard (Criaremos essa caixinha no seu HTML em breve)
         if(document.getElementById('dash-delivery')) document.getElementById('dash-delivery').textContent = delPendentes;
     });
 
@@ -184,11 +224,9 @@ window.onload = () => {
     const elementoNome = document.getElementById("nomeFuncionarioLogado");
 
     if (elementoNome) {
-        // Só aceita se o nome existir e NÃO for a palavra "undefined"
         if (nomeSalvo && nomeSalvo !== "undefined" && nomeSalvo !== "null") {
             elementoNome.innerText = nomeSalvo.split(" ")[0];
         } else {
-            // Salvo-conduto de respeito caso o login tenha engasgado:
             elementoNome.innerText = "Guerreiro"; 
         }
     }
