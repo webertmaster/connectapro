@@ -12,6 +12,11 @@ function toggleFormOcorrencia() {
     if (form.style.display === "none" || form.style.display === "") {
         form.style.display = "block";
         carregarPorteirosOcorrencia(); 
+        
+        // 🚀 INVOCA O CARIMBO MÁGICO DA RECEPÇÃO (APP.JS) PARA PREENCHER OS APTOS:
+        if (typeof carregarApartamentosNoSelect === 'function') {
+            carregarApartamentosNoSelect('ocoApto');
+        }
     } else {
         form.style.display = "none";
     }
@@ -21,7 +26,6 @@ function toggleFormOcorrencia() {
 // 1. ESCUTADOR EM TEMPO REAL (NUVEM COM FILTRO DE CONDOMÍNIO)
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Pega a credencial do prédio no bolso do navegador
     const meuCondominio = localStorage.getItem("condominioId");
 
     if (!meuCondominio) {
@@ -30,7 +34,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (typeof db !== 'undefined') {
-        // 2. MÁGICA MULTI-TENANT: Onde condominioId for igual ao meuCondominio
         db.collection("ocorrencias").where("condominioId", "==", meuCondominio).onSnapshot((snapshot) => {
             ocorrenciasGlobais = [];
             snapshot.forEach((doc) => {
@@ -39,23 +42,51 @@ window.addEventListener('DOMContentLoaded', () => {
                 ocorrenciasGlobais.push(o);
             });
 
-            // 3. Ordena localmente pela data e hora (evita erro de índice duplo no Firebase)
             ocorrenciasGlobais.sort((a, b) => new Date(b.dataCadastro) - new Date(a.dataCadastro));
 
             mostrarOcorrencias(); 
             if(typeof atualizarDashboard === 'function') atualizarDashboard();
         });
     }
+
+    // 🚀 GATILHO DOMINÓ PREMIUM: Quando escolhe o Apto, puxa da memória na hora!
+    const selectAptoOco = document.getElementById('ocoApto');
+    if (selectAptoOco) {
+        selectAptoOco.addEventListener('change', function() {
+            const aptoEscolhido = this.value.trim();
+            const campoMorador = document.getElementById('ocoMorador');
+            if (!campoMorador) return;
+
+            if (!aptoEscolhido) {
+                campoMorador.value = '';
+                return;
+            }
+
+            // Busca instantânea na memória local (Economiza seu faturamento do Firebase)
+            if (typeof memoriaDominóMoradores !== 'undefined' && memoriaDominóMoradores.length > 0) {
+                const moradorEncontrado = memoriaDominóMoradores.find(m => m.apto === aptoEscolhido);
+                
+                if (moradorEncontrado) {
+                    campoMorador.value = moradorEncontrado.nome;
+                } else {
+                    campoMorador.value = "Área Comum / Não identificado";
+                }
+            } else {
+                // 🛡️ PLANO B: Se a memória falhar, busca direto no banco de dados!
+                db.collection("moradores").where("condominioId", "==", meuCondominio).where("apto", "==", aptoEscolhido).get().then(s => {
+                    campoMorador.value = !s.empty ? s.docs[0].data().nome : "Área Comum / Não identificado";
+                });
+            }
+        });
+    }
 });
 
-// 🚀 PUXA OS FUNCIONÁRIOS DA VARIÁVEL DO EQUIPE.JS
 function carregarPorteirosOcorrencia() {
     let select = document.getElementById("ocoPorteiro");
     if (!select) return;
     
     select.innerHTML = '<option value="" disabled selected>👮 Selecione o Responsável</option>';
     
-    // Verifica se a variável equipeGlobais existe (criada no equipe.js) e tem dados
     if (typeof equipeGlobais === 'undefined' || equipeGlobais.length === 0) {
         select.innerHTML += '<option value="Sistema">Sistema (Nenhum funcionário cadastrado)</option>';
     } else {
@@ -103,8 +134,6 @@ function salvarOcorrencia() {
 
 function finalizarSalvamentoOcorrenciaNuvem(foto, tipo, desc, port, statusSelecionado, prioridade, apto, morador, btnSalvar, textoOriginal) {
     let agora = new Date();
-    
-    // Pega a credencial para carimbar o documento
     const meuCondominio = localStorage.getItem("condominioId");
 
     let dadosEnviados = {
@@ -118,14 +147,12 @@ function finalizarSalvamentoOcorrenciaNuvem(foto, tipo, desc, port, statusSeleci
         hora: agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}), 
         registradoPor: port,
         dataCadastro: agora.toISOString(),
-        condominioId: meuCondominio // A ETIQUETA INVISÍVEL FICA PRESA AQUI!
+        condominioId: meuCondominio
     };
 
-    // Só adiciona a imagem se a pessoa enviou uma nova (para não apagar a antiga na edição se ela não mexer na foto)
     if (foto) dadosEnviados.foto = foto;
 
     if (idOcorrenciaEditandoFirebase) {
-        // MODO EDIÇÃO
         db.collection("ocorrencias").doc(idOcorrenciaEditandoFirebase).update(dadosEnviados)
             .then(() => {
                 alert("✅ Ocorrência atualizada com sucesso na nuvem!");
@@ -136,8 +163,7 @@ function finalizarSalvamentoOcorrenciaNuvem(foto, tipo, desc, port, statusSeleci
                 if(btnSalvar) { btnSalvar.innerHTML = textoOriginal; btnSalvar.style.pointerEvents = 'auto'; }
             });
     } else {
-        // MODO NOVO REGISTRO
-        dadosEnviados.excluido = false; // Soft Delete
+        dadosEnviados.excluido = false; 
         db.collection("ocorrencias").add(dadosEnviados)
             .then(() => {
                 alert("🚨 Ocorrência registrada na nuvem!");
@@ -152,7 +178,7 @@ function finalizarSalvamentoOcorrenciaNuvem(foto, tipo, desc, port, statusSeleci
 function finalizarFormularioOcorrencia(btnSalvar, textoFinal) {
     if(btnSalvar) { 
         btnSalvar.innerHTML = textoFinal; 
-        btnSalvar.style.background = "#3b82f6"; // Volta o botão pro azul
+        btnSalvar.style.background = "#3b82f6"; 
         btnSalvar.style.pointerEvents = 'auto'; 
     }
     document.getElementById("ocoTipo").value = ''; document.getElementById("ocoDescricao").value = ''; 
@@ -160,7 +186,6 @@ function finalizarFormularioOcorrencia(btnSalvar, textoFinal) {
     document.getElementById("ocoPorteiro").value = ''; 
     let fotoInput = document.getElementById("ocoFoto"); if(fotoInput) fotoInput.value = '';
     
-    // Esconde o formulário após salvar para limpar a tela
     let form = document.getElementById("form-ocorrencia"); 
     if (form) form.style.display = "none";
 }
@@ -201,7 +226,7 @@ function prepararEdicaoOcorrencia(idFirebase) {
         let btnSalvar = document.getElementById("btnSalvarOcorrencia");
         if(btnSalvar) {
             btnSalvar.innerHTML = "<i class='fa-solid fa-floppy-disk'></i> Salvar Alterações";
-            btnSalvar.style.background = "#10b981"; // Verde de Edição
+            btnSalvar.style.background = "#10b981"; 
         }
         
         idOcorrenciaEditandoFirebase = idFirebase; 
@@ -236,15 +261,11 @@ function mostrarOcorrencias(filtro="") {
 
     let urg = 0, abertos = 0, res = 0, hoje = 0; 
     let dHoje = new Date().toISOString().split('T')[0];
-    
-    // LÊ O CRACHÁ DO USUÁRIO LOGADO PARA SEGURANÇA NOS BOTÕES
     const cargo = localStorage.getItem("usuario_cargo");
-    
-    // Trabalhamos sempre com a base de dados sincronizada da Nuvem
     const ocorrencias = ocorrenciasGlobais;
 
     ocorrencias.forEach((o) => {
-        if (o.excluido === true) return; // Soft Delete: Oculta da tela da portaria
+        if (o.excluido === true) return; 
         
         let conteudoBuscavel = `${o.tipo} ${o.apto} ${o.morador} ${o.descricao} ${o.registradoPor}`.toLowerCase(); 
         if(filtro && !conteudoBuscavel.includes(filtro.toLowerCase())) return;
@@ -261,7 +282,6 @@ function mostrarOcorrencias(filtro="") {
         
         let dataFormatada = o.data ? o.data.split('-').reverse().join('/') : "Data Indefinida";
 
-        // BLINDAGEM DOS BOTÕES INFERIORES BASEADO NO CARGO
         let botoesAcaoHtml = '';
         if (cargo === 'operacional') {
             botoesAcaoHtml = `
@@ -318,5 +338,5 @@ function mostrarOcorrencias(filtro="") {
 function pesquisarOcorrencias() { mostrarOcorrencias(document.getElementById("pesquisaOcorrencia").value); }
 
 function gerarRelatorioOcorrencias() { 
-    alert("Para gerar o relatório completo com todos os dados da Nuvem, utilize a aba de Relatórios do sistema!");
+    alert("Para gerar o relatório completo com todos os dados da Nuvem, utilize a aba de Relatórios do system!");
 }
