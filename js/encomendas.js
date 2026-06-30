@@ -34,12 +34,10 @@ function configurarCanvas(canvasId){
 let encomendaCanvas = null;
 
 // ==========================================
-// 1. ESCUTADOR EM TEMPO REAL (NUVEM COM FILTRO DE CONDOMÍNIO)
+// 1. ESCUTADOR EM TEMPO REAL E GATILHOS DOMINÓ
 // ==========================================
 window.addEventListener('DOMContentLoaded', (event) => {
     encomendaCanvas = configurarCanvas("canvasEncomenda");
-    
-    // 1. Pega a credencial do prédio no bolso do navegador
     const meuCondominio = localStorage.getItem("condominioId");
 
     if (!meuCondominio) {
@@ -48,7 +46,6 @@ window.addEventListener('DOMContentLoaded', (event) => {
     }
 
     if(typeof db !== 'undefined') {
-        // 2. MÁGICA MULTI-TENANT: Onde condominioId for igual ao meuCondominio
         db.collection("encomendas").where("condominioId", "==", meuCondominio).onSnapshot((snapshot) => {
             encomendas = []; 
             snapshot.forEach((doc) => {
@@ -57,7 +54,6 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 encomendas.push(encomenda);
             });
             
-            // Ordena localmente pela data (evita erro de índice duplo no Firebase)
             encomendas.sort((a, b) => new Date(b.dataCadastro) - new Date(a.dataCadastro));
 
             localStorage.setItem("encomendas", JSON.stringify(encomendas));
@@ -66,6 +62,33 @@ window.addEventListener('DOMContentLoaded', (event) => {
         });
     } else {
         console.error("Firebase DB não encontrado. Verifique o index.html");
+    }
+
+    // 🚀 GATILHO DOMINÓ PREMIUM: Puxa o nome do destinatário instantaneamente pela memória do app.js
+    const selectAptoEnc = document.getElementById('encApto');
+    if (selectAptoEnc) {
+        selectAptoEnc.addEventListener('change', function() {
+            const aptoEscolhido = this.value.trim();
+            const campoMorador = document.getElementById('encMorador');
+            if (!campoMorador) return;
+
+            if (!aptoEscolhido) {
+                campoMorador.value = '';
+                return;
+            }
+
+            if (typeof memoriaDominóMoradores !== 'undefined' && memoriaDominóMoradores.length > 0) {
+                const moradorEncontrado = memoriaDominóMoradores.find(m => m.apto === aptoEscolhido);
+                
+                if (moradorEncontrado) {
+                    campoMorador.value = moradorEncontrado.nome;
+                } else {
+                    campoMorador.value = "Morador não cadastrado";
+                }
+            } else {
+                campoMorador.value = "Buscando morador...";
+            }
+        });
     }
 });
 
@@ -102,8 +125,6 @@ function salvarEncomenda(){
 // ==========================================
 function criarEncomenda(foto, btnNode, textoOriginal){
     let agora = new Date(); 
-    
-    // Pega a credencial para carimbar o documento
     const meuCondominio = localStorage.getItem("condominioId");
 
     let dadosEnviados = {
@@ -118,7 +139,7 @@ function criarEncomenda(foto, btnNode, textoOriginal){
         horaChegada: agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
         dataCadastro: agora.toISOString(), 
         quemRetirou: "", dataEntrega: "", horaEntrega: "",
-        condominioId: meuCondominio // A ETIQUETA INVISÍVEL FICA PRESA AQUI!
+        condominioId: meuCondominio 
     };
 
     if (foto) dadosEnviados.foto = foto;
@@ -128,7 +149,6 @@ function criarEncomenda(foto, btnNode, textoOriginal){
     }
 
     if (editandoIdFirebase) {
-        // MODO EDIÇÃO
         db.collection("encomendas").doc(editandoIdFirebase).update(dadosEnviados)
         .then(() => {
             alert("✅ Encomenda atualizada com sucesso!");
@@ -136,8 +156,7 @@ function criarEncomenda(foto, btnNode, textoOriginal){
             editandoIdFirebase = null;
         }).catch(err => { alert("Erro ao atualizar!"); finalizarAcao(btnNode, textoOriginal); });
     } else {
-        // MODO NOVA ENCOMENDA
-        dadosEnviados.excluido = false; // Nasce ativa
+        dadosEnviados.excluido = false; 
         db.collection("encomendas").add(dadosEnviados)
         .then(() => {
             alert("📦 Encomenda salva na NUVEM com sucesso!");
@@ -149,7 +168,7 @@ function criarEncomenda(foto, btnNode, textoOriginal){
 function finalizarAcao(btnNode, textoFinal) {
     if(btnNode) {
         btnNode.innerHTML = `<i class="fa-solid fa-plus"></i> ${textoFinal}`;
-        btnNode.style.background = "#3b82f6"; // Volta o botão pro azul
+        btnNode.style.background = "#3b82f6"; 
         btnNode.style.pointerEvents = 'auto';
     }
     document.getElementById('encMorador').value=''; document.getElementById('encApto').value=''; document.getElementById('encTransportadora').value=''; 
@@ -170,14 +189,14 @@ function prepararEdicaoEncomenda(index) {
     const btnNode = document.querySelector("#encomendas .btn[onclick='salvarEncomenda()']");
     if(btnNode) {
         btnNode.innerHTML = "<i class='fa-solid fa-floppy-disk'></i> Salvar Alterações";
-        btnNode.style.background = "#10b981"; // Fica verde para alertar edição
+        btnNode.style.background = "#10b981"; 
     }
     editandoIdFirebase = e.id; 
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ==========================================
-// RENDERIZAR NA TELA (COM BUSCA DUPLA E GRID)
+// RENDERIZAR NA TELA (COM ÍCONES PREMIUM E ABAS)
 // ==========================================
 function mostrarEncomendas(){
     let lista = document.getElementById('listaEncomendas'); 
@@ -190,21 +209,18 @@ function mostrarEncomendas(){
     let hojeCalculo = new Date(); hojeCalculo.setHours(0,0,0,0);
     let filtroData = document.getElementById("filtroDataEncomenda") ? document.getElementById("filtroDataEncomenda").value : "";
     let filtroTexto = document.getElementById("pesquisaEncomenda") ? document.getElementById("pesquisaEncomenda").value.toLowerCase() : "";
-
-    // LÊ O CRACHÁ DO USUÁRIO LOGADO PARA SEGURANÇA
     const cargo = localStorage.getItem("usuario_cargo");
 
-    // CONTROLE DE ABAS (Pendente é o padrão ao abrir a tela)
     if (!window.abaEncomendaAtual) window.abaEncomendaAtual = 'Pendente';
-
-    // Conta quantas encomendas ativas existem de cada tipo para exibir nos botões
     const qtdPendentes = encomendas.filter(enc => !enc.excluido && enc.status === 'Pendente').length;
 
-    // INJETA OS BOTÕES DE ABAS PREMIUM NO TOPO DA LISTA
+    // 🚀 ÍCONE 1: Ilustração Vetorial Premium 3D da Caixa de Encomendas no Botão de Estoque
+    const iconeCaixa3D = `<img src="https://cdn-icons-png.flaticon.com/512/3502/3502685.png" style="width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));">`;
+
     let abasHtml = `
         <div style="display: flex; gap: 10px; margin-bottom: 25px; grid-column: 1 / -1; width: 100%;">
-            <button onclick="window.abaEncomendaAtual='Pendente'; mostrarEncomendas();" style="flex: 1; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; background: ${window.abaEncomendaAtual === 'Pendente' ? '#3b82f6' : '#f1f5f9'}; color: ${window.abaEncomendaAtual === 'Pendente' ? '#fff' : '#475569'}; box-shadow: ${window.abaEncomendaAtual === 'Pendente' ? '0 4px 12px rgba(59,130,246,0.25)' : 'none'};">
-                <i class="fa-solid fa-boxes-stacked"></i> No Estoque / Pendentes (${qtdPendentes})
+            <button onclick="window.abaEncomendaAtual='Pendente'; mostrarEncomendas();" style="flex: 1; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; background: ${window.abaEncomendaAtual === 'Pendente' ? '#3b82f6' : '#f1f5f9'}; color: ${window.abaEncomendaAtual === 'Pendente' ? '#fff' : '#475569'}; box-shadow: ${window.abaEncomendaAtual === 'Pendente' ? '0 4px 12px rgba(59,130,246,0.25)' : 'none'};">
+                ${iconeCaixa3D} No Estoque / Pendentes (${qtdPendentes})
             </button>
             <button onclick="window.abaEncomendaAtual='Entregue'; mostrarEncomendas();" style="flex: 1; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; background: ${window.abaEncomendaAtual === 'Entregue' ? '#10b981' : '#f1f5f9'}; color: ${window.abaEncomendaAtual === 'Entregue' ? '#fff' : '#475569'}; box-shadow: ${window.abaEncomendaAtual === 'Entregue' ? '0 4px 12px rgba(16,185,129,0.25)' : 'none'};">
                 <i class="fa-solid fa-circle-check"></i> Histórico de Entregues
@@ -213,31 +229,32 @@ function mostrarEncomendas(){
     `;
     lista.innerHTML = abasHtml;
 
-    // RENDERIZA OS CARTÕES
+    // 🚀 ÍCONE 2: Injeção Visual da Lupa Premium 3D na Barra de Pesquisa
+    const barraPesquisaEl = document.getElementById("pesquisaEncomenda");
+    if (barraPesquisaEl && barraPesquisaEl.parentElement) {
+        const iconeLupaVelho = barraPesquisaEl.parentElement.querySelector("i.fa-magnifying-glass");
+        if (iconeLupaVelho) {
+            const lupa3D = document.createElement("img");
+            lupa3D.src = "https://cdn-icons-png.flaticon.com/512/2809/2809800.png";
+            lupa3D.style.cssText = "width: 20px; height: 20px; object-fit: contain; margin-right: 8px; filter: drop-shadow(0 2px 3px rgba(59,130,246,0.3));";
+            iconeLupaVelho.replaceWith(lupa3D);
+        }
+    }
+
     encomendas.forEach((e,index)=>{
-        if (e.excluido === true) return; // SOFT DELETE: Mantém pra Relatório
-        
-        // FILTRO DA ABA SELECIONADA (Só mostra o status da aba ativa)
+        if (e.excluido === true) return; 
         if (e.status !== window.abaEncomendaAtual) return;
 
-        // ==========================================
-        // TRAVA DOS 60 DIAS (AUTOMÁTICA NO HISTÓRICO)
-        // ==========================================
         if (e.status === 'Entregue' && e.dataEntrega) {
             let partes = e.dataEntrega.split('/'); 
             let dEntrega = new Date(partes[2], partes[1] - 1, partes[0]);
-            
             let diffDias = Math.floor((hojeCalculo - dEntrega) / (1000 * 60 * 60 * 24));
-            
-            if (diffDias > 60) {
-                return; 
-            }
+            if (diffDias > 60) return; 
         }
         
         if(filtroData && e.dataChegada !== filtroData) return;
         
         if (filtroTexto) {
-            // Adicionamos o e.id na busca! Assim a câmera escaneia o QR Code e acha a caixa na hora.
             let textoBusca = `${e.morador} ${e.apto} ${e.codigo} ${e.id}`.toLowerCase();
             if (!textoBusca.includes(filtroTexto)) return;
         }
@@ -283,7 +300,6 @@ function mostrarEncomendas(){
             `;
         }
 
-        // BLINDAGEM DOS BOTÕES INFERIORES BASEADO NO CARGO
         let botoesGestaoHtml = '';
         if (cargo === 'operacional') {
             botoesGestaoHtml = `
@@ -397,7 +413,6 @@ function finalizarEntregaNoBanco(i, quemBuscou) {
 function excluirEncomenda(i){ 
     if(confirm("🚨 Arquivar Registro: Tem certeza que deseja arquivar esta encomenda? Ela sairá do painel principal, mas continuará salva para os Relatórios.")) { 
         let e = encomendas[i];
-        // Soft delete no lugar do delete()
         db.collection("encomendas").doc(e.id).update({
             excluido: true,
             dataExclusao: Date.now()
@@ -427,7 +442,6 @@ function imprimirEtiqueta(index){
     let vol = e.volumes || "1"; 
     let ident = e.id || "Sem_ID";
     
-    // API que gera o QR Code na hora sem precisar instalar nada
     let qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${ident}`;
     
     janela.document.write(`<html><head><title>Etiqueta Padrão</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:10px;margin:0;} h1{margin:5px 0;font-size:32px;border-bottom:2px solid #000;padding-bottom:5px;} h2{margin:10px 0 5px 0;font-size:20px;} p{margin:5px 0;font-size:16px;} .rodape{font-size:10px;margin-top:10px;color:#555;} .btn-imprimir{margin-top:20px;padding:12px 20px;background:#000;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-weight:bold;width:80%;} @media print{.btn-imprimir{display:none !important;}}</style></head><body><h1>AP ${e.apto}</h1><h2>${e.morador}</h2><p><b>Transp:</b> ${e.transportadora}</p><p><b>Vols:</b> ${vol}</p><img src="${qrCodeUrl}" style="margin-top: 10px; width: 120px; height: 120px; border: 2px solid #000; border-radius: 8px; padding: 5px;"><p style="font-size: 14px; margin-top: 5px;">📅 ${dataFormatada} às ${horaFormatada}</p><p class="rodape">ID: ${ident}</p><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Etiqueta</button><p style="font-size: 11px; color: #888; margin-top: 5px;" class="btn-imprimir">Feche a janela após imprimir.</p><script> window.onload = function() { setTimeout(() => window.print(), 600); }; window.onafterprint = function() { window.close(); }; <\/script></body></html>`);
@@ -439,7 +453,6 @@ function imprimirSoQRCode(index){
     let janela = window.open("", "", "width=300,height=380"); 
     let ident = e.id || "Sem_ID"; 
     
-    // API que gera o QR Code na hora sem precisar instalar nada
     let qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${ident}`;
     
     janela.document.write(`<html><head><title>Etiqueta QR Code</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;} .rodape{font-size:22px;font-weight:bold;margin:10px 0 0 0;} .sub-rodape{font-size:12px;color:#555;margin-top:3px;} .btn-imprimir{margin-top:20px;padding:10px 20px;background:#000;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:bold;} @media print{.btn-imprimir{display:none !important;}}</style></head><body><img src="${qrCodeUrl}" style="width: 200px; height: 200px;"><p class="rodape">AP ${e.apto}</p><p class="sub-rodape">ID: ${ident}</p><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir</button><script> window.onload = function() { setTimeout(() => window.print(), 600); }; window.onafterprint = function() { window.close(); }; <\/script></body></html>`);
@@ -464,10 +477,7 @@ function iniciarLeitorQR() {
             qrbox: { width: 250, height: 250 }
         },
         (codigoLido, decodedResult) => {
-            // Toca um som de bipe rápido
             tocarBipe();
-            
-            // Joga o código lido na barra de pesquisa e filtra
             const barraPesquisa = document.getElementById('pesquisaEncomenda');
             if (barraPesquisa) {
                 barraPesquisa.value = codigoLido;
@@ -475,13 +485,10 @@ function iniciarLeitorQR() {
                     filtrarEncomendas(); 
                 }
             }
-            
             fecharLeitorQR();
             alert(`📦 Pacote Encontrado! Código: ${codigoLido}`);
         },
-        (mensagemErro) => {
-            // Fica procurando em silêncio...
-        }
+        (mensagemErro) => {}
     ).catch((err) => {
         console.error("Erro na Câmera: ", err);
         alert("⚠️ Erro ao abrir a câmera. Verifique se você deu permissão no navegador.");
