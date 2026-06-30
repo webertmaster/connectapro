@@ -395,8 +395,10 @@
             <input type="date" id="dataReserva">
             <input type="time" id="horaReserva">
             
-            <input id="responsavel" placeholder="Responsável (Nome do Morador)">
-            <input id="aptoReserva" placeholder="Apartamento / Bloco (Opcional)">
+            <select id="aptoReserva" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; margin-bottom: 12px;">
+    <option value="">🏢 Selecione o Apto / Bloco</option>
+</select>
+<input id="responsavel" placeholder="Aguardando escolha do Apto..." readonly style="background: #f8fafc; width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px;">
             
             <div class="input-group" style="margin-top: 15px; grid-column: 1 / -1;">
                 <label style="display: block; margin-bottom: 8px; color: #64748b; font-weight: 500; font-size: 14px;">
@@ -477,9 +479,11 @@
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                <input id="ocoApto" placeholder="🏢 Apartamento / Local" style="margin: 0;">
-                <input id="ocoMorador" placeholder="👤 Nome do Morador" style="margin: 0;">
-            </div>
+    <select id="ocoApto" style="margin: 0; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white;">
+        <option value="">🏢 Selecione o Apto / Local</option>
+    </select>
+    <input id="ocoMorador" placeholder="Aguardando escolha..." readonly style="margin: 0; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569;">
+</div>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <select id="ocoPorteiro" style="margin: 0;">
@@ -517,9 +521,24 @@
         </div>
 
         <div class="box">
-            <h2>📦 Nova Encomenda</h2>
+            <h2 style="display: flex; align-items: center; gap: 12px; color: #1e293b;">
+    <span class="icone-premium-caixa" style="background: linear-gradient(135deg, #10b981, #059669); color: white; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 4px 8px rgba(16,185,129,0.3); font-size: 16px; transition: all 0.3s ease; cursor: pointer;">
+        <i class="fa-solid fa-box-open"></i>
+    </span> 
+    Nova Encomenda
+</h2>
+
+<style>
+    .icone-premium-caixa:hover {
+        transform: scale(1.15) translateY(-5px); /* Pula levemente para cima */
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4) !important;
+        background: linear-gradient(135deg, #059669, #065f46) !important;
+    }
+</style>
             <input id="encMorador" placeholder="Morador (Obrigatório)">
-            <input id="encApto" placeholder="Apartamento (Obrigatório)">
+            <select id="encApto" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white;">
+    <option value="">🏢 Selecione o Apartamento...</option>
+</select>
             <input id="encTransportadora" placeholder="Transportadora">
             <input id="encCodigo" placeholder="Código/Rastreio">
             <input id="encVolumes" placeholder="Volumes">
@@ -544,7 +563,20 @@
         </div>
 
         <div class="box" style="background: rgba(59, 130, 246, 0.05);">
-            <h2>🔍 Histórico de Encomendas</h2>
+            <h2 style="display: flex; align-items: center; gap: 12px; color: #1e293b;">
+    <span class="icone-premium-lupa" style="background: linear-gradient(135deg, #60a5fa, #1d4ed8); color: white; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 4px 8px rgba(37,99,235,0.3); font-size: 16px; transition: all 0.3s ease; cursor: pointer;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+    </span> 
+    Histórico de Encomendas
+</h2>
+
+<style>
+    .icone-premium-lupa:hover {
+        transform: scale(1.15) rotate(5deg); /* Aumenta um pouco e dá um leve giro */
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.5) !important; /* Aumenta a sombra */
+        background: linear-gradient(135deg, #3b82f6, #1e40af) !important; /* Escurece o gradiente */
+    }
+</style>
             <div class="filtro-container" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 
                 <div style="display: flex; flex: 2; min-width: 180px; align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 10px; height: 44px;">
@@ -894,19 +926,19 @@
     const auth = firebase.auth();
 </script>
 
-<script src="js/app.js"></script>
+<script src="js/app.js?v=2"></script>
 <script src="js/equipe.js"></script>
 <script src="js/plantao.js"></script>
 <script src="js/ponto.js"></script>
 <script src="js/moradores.js"></script>
 <script src="js/veiculos.js"></script>
-<script src="js/reservas.js"></script>
-<script src="js/ocorrencias.js"></script>
-<script src="js/encomendas.js"></script>
+<script src="js/reservas.js?v=2"></script>
+<script src="js/ocorrencias.js?v=2"></script>
+<script src="js/encomendas.js?v=2"></script>
 <script src="js/comunicados.js"></script>
 <script src="js/relatorios.js"></script>
 <script src="js/limpeza.js"></script>
-<script src="js/delivery.js"></script>
+<script src="js/delivery.js?v=2"></script>
 <script src="js/perfil.js"></script>
 <script src="js/ajuda.js"></script> <script>
   if ('serviceWorker' in navigator) {
