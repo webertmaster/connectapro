@@ -1,5 +1,5 @@
 // ==========================================
-// ZERO LABS - CONNECTA PRO
+// ZERO LABS - CONDO UP
 // reservas.js - Agendamento, Convidados e Termos (MULTI-TENANT ATIVO)
 // ==========================================
 
@@ -61,6 +61,11 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // 🚀 GATILHO 1: Carrega a lista suspensa de apartamentos
+    if (typeof carregarApartamentosNoSelect === 'function') {
+        carregarApartamentosNoSelect('aptoReserva');
+    }
+
     if(typeof db !== 'undefined') {
         // 2. MÁGICA MULTI-TENANT: Onde condominioId for igual ao meuCondominio
         db.collection("reservas").where("condominioId", "==", meuCondominio).onSnapshot((snapshot) => {
@@ -78,6 +83,27 @@ window.addEventListener('DOMContentLoaded', () => {
             if(typeof atualizarDashboard === 'function') atualizarDashboard();
         });
     }
+
+    // 🚀 GATILHO 2: Clica no Apto ➔ Puxa o Nome do Morador
+    const selectAptoReserva = document.getElementById('aptoReserva');
+    if (selectAptoReserva) {
+        selectAptoReserva.addEventListener('change', function() {
+            const aptoEscolhido = this.value.trim();
+            const campoResponsavel = document.getElementById('responsavel');
+            if (!campoResponsavel) return;
+
+            if (!aptoEscolhido) { campoResponsavel.value = ''; return; }
+
+            if (typeof memoriaDominóMoradores !== 'undefined' && memoriaDominóMoradores.length > 0) {
+                const m = memoriaDominóMoradores.find(item => item.apto === aptoEscolhido);
+                campoResponsavel.value = m ? m.nome : "Morador não cadastrado";
+            } else {
+                db.collection("moradores").where("condominioId", "==", meuCondominio).where("apto", "==", aptoEscolhido).get().then(s => {
+                    campoResponsavel.value = !s.empty ? s.docs[0].data().nome : "Morador não cadastrado";
+                });
+            }
+        });
+    }
 });
 
 // ==========================================
@@ -90,8 +116,8 @@ function salvarReserva() {
     const responsavel = document.getElementById('responsavel').value.trim();
     const apto = document.getElementById('aptoReserva').value.trim();
 
-    if (!data || !hora || !responsavel) {
-        alert('⚠️ Acesso Negado: Preencha a Data, Hora e o Nome do Responsável!');
+    if (!data || !hora || !responsavel || !apto) {
+        alert('⚠️ Acesso Negado: Preencha a Data, Hora, Apartamento e Nome do Responsável!');
         return;
     }
 
@@ -466,7 +492,7 @@ function gerarPDFTermo(local, data, hora, responsavel, apto, assinaturaImg) {
     
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("CONNECTA PRO - PORTARIA", 105, 20, null, null, "center");
+    doc.text("CONDO UP - PORTARIA", 105, 20, null, null, "center");
     
     doc.setFontSize(14);
     doc.setFont("helvetica", "normal");
@@ -542,7 +568,7 @@ function gerarPDFTermo(local, data, hora, responsavel, apto, assinaturaImg) {
     doc.setFont("helvetica", "italic");
     doc.setTextColor(150, 150, 150);
     let dataEmissao = new Date().toLocaleString('pt-BR');
-    doc.text(`Documento gerado oficialmente pelo sistema Connecta Pro em ${dataEmissao}`, 105, 285, null, null, "center");
+    doc.text(`Documento gerado oficialmente pelo sistema Condo Up em ${dataEmissao}`, 105, 285, null, null, "center");
 
     let nomeArquivo = responsavel === "___________________________________" ? "Termo_Reserva_Branco.pdf" : `Termo_${local.replace(/\s+/g, '_')}_${data.replace(/\//g, '-')}.pdf`;
     
