@@ -1,5 +1,5 @@
 // ==========================================
-// ZERO LABS - CONNECTA PRO (NUVEM FIREBASE)
+// ZERO LABS - CONDO UP (NUVEM FIREBASE)
 // comunicados.js - Mural de Avisos (MULTI-TENANT ATIVO)
 // ==========================================
 
