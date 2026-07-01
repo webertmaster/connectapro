@@ -1,5 +1,5 @@
 // ==========================================
-// ZERO LABS - CONNECTA PRO (NUVEM FIREBASE)
+// EVO UPI - CONDO UP (NUVEM FIREBASE)
 // encomendas.js - Gestão Premium (MULTI-TENANT ATIVO)
 // ==========================================
 
@@ -17,17 +17,50 @@ const logosTransportadoras = {
 let editandoIdFirebase = null;
 let encomendas = []; 
 
+// ==========================================
+// 🚀 MOTOR DE ASSINATURA V2 (ESCALA MATEMÁTICA PERFEITA)
+// ==========================================
 function configurarCanvas(canvasId){
     let canvas = document.getElementById(canvasId);
     if(!canvas) return null; 
+    
+    // Força a resolução interna para evitar distorção quando a aba está escondida
+    canvas.width = 600; 
+    canvas.height = 150;
+    
     let ctx = canvas.getContext("2d");
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = document.body.classList.contains('dark-mode') ? "#fff" : "#0f172a";
+    
     let desenhando = false;
-    canvas.addEventListener("mousedown",(e)=>{ desenhando = true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); });
-    canvas.addEventListener("mouseup",()=>{ desenhando = false; });
-    canvas.addEventListener("mousemove",(e)=>{ if(!desenhando) return; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = document.body.classList.contains('dark-mode') ? "#fff" : "#000"; ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); });
-    canvas.addEventListener("touchstart",(e)=>{ e.preventDefault(); desenhando = true; let rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top); });
-    canvas.addEventListener("touchmove",(e)=>{ if(!desenhando) return; e.preventDefault(); let rect = canvas.getBoundingClientRect(); ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = document.body.classList.contains('dark-mode') ? "#fff" : "#000"; ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top); ctx.stroke(); });
-    canvas.addEventListener("touchend",()=>{ desenhando = false; });
+
+    // Calcula a proporção real para a tinta sair exatamente na ponta do dedo
+    const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { 
+            x: (clientX - rect.left) * scaleX, 
+            y: (clientY - rect.top) * scaleY 
+        };
+    };
+
+    const start = (e) => { e.preventDefault(); desenhando = true; const {x,y} = getPos(e); ctx.beginPath(); ctx.moveTo(x, y); };
+    const draw = (e) => { e.preventDefault(); if(!desenhando) return; const {x,y} = getPos(e); ctx.lineTo(x, y); ctx.stroke(); };
+    const stop = (e) => { e.preventDefault(); desenhando = false; };
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stop);
+    canvas.addEventListener('mouseout', stop);
+
+    canvas.addEventListener('touchstart', start, {passive: false});
+    canvas.addEventListener('touchmove', draw, {passive: false});
+    canvas.addEventListener('touchend', stop);
+    
     return { canvas, ctx };
 }
 
@@ -64,7 +97,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
         console.error("Firebase DB não encontrado. Verifique o index.html");
     }
 
-    // 🚀 GATILHO DOMINÓ PREMIUM: Puxa o nome do destinatário instantaneamente pela memória do app.js
+    // 🚀 GATILHO DOMINÓ PREMIUM: Puxa o nome do destinatário instantaneamente
     const selectAptoEnc = document.getElementById('encApto');
     if (selectAptoEnc) {
         selectAptoEnc.addEventListener('change', function() {
@@ -96,6 +129,14 @@ function limparAssinaturaEncomenda(){
     if(encomendaCanvas && encomendaCanvas.canvas) {
         encomendaCanvas.ctx.clearRect(0,0,encomendaCanvas.canvas.width,encomendaCanvas.canvas.height); 
     }
+}
+
+// Verifica se o quadro de assinatura está em branco (Opcional para a encomenda)
+function isCanvasBlank(canvas) {
+    const blank = document.createElement('canvas');
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+    return canvas.toDataURL() === blank.toDataURL();
 }
 
 function salvarEncomenda(){
@@ -143,9 +184,11 @@ function criarEncomenda(foto, btnNode, textoOriginal){
     };
 
     if (foto) dadosEnviados.foto = foto;
-    if (encomendaCanvas && encomendaCanvas.canvas) {
-        const url = encomendaCanvas.canvas.toDataURL();
-        if (url.length > 2000) dadosEnviados.assinatura = url;
+    
+    // Captura o desenho do Canvas v2
+    if (encomendaCanvas && encomendaCanvas.canvas && !isCanvasBlank(encomendaCanvas.canvas)) {
+        const url = encomendaCanvas.canvas.toDataURL("image/png");
+        dadosEnviados.assinatura = url;
     }
 
     if (editandoIdFirebase) {
@@ -186,6 +229,8 @@ function prepararEdicaoEncomenda(index) {
     document.getElementById('encVolumes').value = e.volumes || "";
     document.getElementById('encPorteiro').value = e.porteiro || "";
     
+    limparAssinaturaEncomenda(); // Limpa para evitar sobrescrever a velha sem querer
+
     const btnNode = document.querySelector("#encomendas .btn[onclick='salvarEncomenda()']");
     if(btnNode) {
         btnNode.innerHTML = "<i class='fa-solid fa-floppy-disk'></i> Salvar Alterações";
@@ -214,7 +259,7 @@ function mostrarEncomendas(){
     if (!window.abaEncomendaAtual) window.abaEncomendaAtual = 'Pendente';
     const qtdPendentes = encomendas.filter(enc => !enc.excluido && enc.status === 'Pendente').length;
 
-    // 🚀 ÍCONE 1: Ilustração Vetorial Premium 3D da Caixa de Encomendas no Botão de Estoque
+    // 🚀 ÍCONE 1: Ilustração Vetorial Premium 3D da Caixa
     const iconeCaixa3D = `<img src="https://cdn-icons-png.flaticon.com/512/3502/3502685.png" style="width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));">`;
 
     let abasHtml = `
@@ -229,15 +274,17 @@ function mostrarEncomendas(){
     `;
     lista.innerHTML = abasHtml;
 
-    // 🚀 ÍCONE 2: Injeção Visual da Lupa Premium 3D na Barra de Pesquisa
+    // 🚀 INJETOR BLINDADO DA LUPA PREMIUM (Remove qualquer ícone antigo e coloca a Lupa 3D)
     const barraPesquisaEl = document.getElementById("pesquisaEncomenda");
     if (barraPesquisaEl && barraPesquisaEl.parentElement) {
-        const iconeLupaVelho = barraPesquisaEl.parentElement.querySelector("i.fa-magnifying-glass");
-        if (iconeLupaVelho) {
+        // Pega qualquer ícone <i> que estiver ao lado do campo
+        const iconeVelho = barraPesquisaEl.parentElement.querySelector("i");
+        if (iconeVelho && !iconeVelho.classList.contains("lupa-premium-inserida")) {
             const lupa3D = document.createElement("img");
             lupa3D.src = "https://cdn-icons-png.flaticon.com/512/2809/2809800.png";
-            lupa3D.style.cssText = "width: 20px; height: 20px; object-fit: contain; margin-right: 8px; filter: drop-shadow(0 2px 3px rgba(59,130,246,0.3));";
-            iconeLupaVelho.replaceWith(lupa3D);
+            lupa3D.style.cssText = "width: 24px; height: 24px; object-fit: contain; margin-right: 10px; filter: drop-shadow(0 2px 4px rgba(59,130,246,0.3));";
+            lupa3D.classList.add("lupa-premium-inserida");
+            iconeVelho.replaceWith(lupa3D);
         }
     }
 
