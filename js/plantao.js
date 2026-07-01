@@ -178,35 +178,57 @@ function excluirPlantao(idFirebase) {
 }
 
 // ==========================================
-// 3. RENDERIZAR NA TELA (COM GRID DE BOTÕES)
+// 3. RENDERIZAR NA TELA (COM GRID DE BOTÕES E FILTRO BLINDADO)
 // ==========================================
 function mostrarPassagens() {
     const lista = document.getElementById('listaPassagens');
     if (!lista) return;
 
-    const filtroPorteiro = document.getElementById('filtroPorteiroPassagem')?.value;
-    const filtroDataInicio = document.getElementById('filtroDataInicio')?.value;
-    const filtroDataFim = document.getElementById('filtroDataFim')?.value;
+    // 🚀 LÓGICA DE FILTRAGEM BLINDADA
+    let filtroPorteiroEl = document.getElementById('filtroPorteiroPassagem');
+    let filtroPorteiro = filtroPorteiroEl ? filtroPorteiroEl.value.trim().toLowerCase() : "";
+    
+    let filtroDataInicioEl = document.getElementById('filtroDataInicio');
+    let filtroDataInicio = filtroDataInicioEl ? filtroDataInicioEl.value : "";
+    
+    let filtroDataFimEl = document.getElementById('filtroDataFim');
+    let filtroDataFim = filtroDataFimEl ? filtroDataFimEl.value : "";
 
     lista.innerHTML = '';
-    let filtrados = passagensGlobais;
+    
+    // Começa apenas com os ativos (Soft Delete)
+    let filtrados = passagensGlobais.filter(p => !p.excluido);
 
-    const cargo = localStorage.getItem("usuario_cargo");
+    // 1. Aplica o filtro de Nome (se existir)
+    if (filtroPorteiro !== "") {
+        filtrados = filtrados.filter(p => {
+            const nomeDoPorteiroCard = (p.porteiro || "").toLowerCase().trim();
+            return nomeDoPorteiroCard === filtroPorteiro;
+        });
+    }
 
-    if (filtroPorteiro) filtrados = filtrados.filter(p => p.porteiro === filtroPorteiro);
-    if (filtroDataInicio) filtrados = filtrados.filter(p => p.data >= filtroDataInicio);
-    if (filtroDataFim) filtrados = filtrados.filter(p => p.data <= filtroDataFim);
+    // 2. Aplica o filtro de Data Inicial
+    if (filtroDataInicio !== "") {
+        filtrados = filtrados.filter(p => p.data >= filtroDataInicio);
+    }
 
-    const ativos = filtrados.filter(p => !p.excluido);
+    // 3. Aplica o filtro de Data Final
+    if (filtroDataFim !== "") {
+        filtrados = filtrados.filter(p => p.data <= filtroDataFim);
+    }
 
-    if (ativos.length === 0) {
-        lista.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b; background: white; border-radius: 12px; border: 1px dashed #cbd5e1;"><i class="fa-solid fa-clipboard-check" style="font-size: 30px; margin-bottom: 10px; opacity: 0.5;"></i><p>Nenhum registro de plantão ativo encontrado.</p></div>';
+    if (filtrados.length === 0) {
+        lista.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b; background: white; border-radius: 12px; border: 1px dashed #cbd5e1;"><i class="fa-solid fa-clipboard-check" style="font-size: 30px; margin-bottom: 10px; opacity: 0.5;"></i><p>Nenhum registro de plantão encontrado com este filtro.</p></div>';
         return;
     }
 
+    const cargo = localStorage.getItem("usuario_cargo");
     const defaultsCheck = { portoes: true, elevadores: true, luzes: true, cameras: true, bombas: true, Energia: true };
 
-    ativos.forEach((p, index) => {
+    filtrados.forEach((p, index) => {
+        // Encontra o índice real no array global caso o porteiro clique em editar
+        const indiceRealNoGlobal = passagensGlobais.findIndex(g => g.idFirebase === p.idFirebase);
+
         const dataF = p.data ? p.data.split('-').reverse().join('/') : "Data Indefinida";
         const horaF = p.hora || "--:--";
         const dataFormatada = `${dataF} às ${horaF}`;
@@ -232,7 +254,7 @@ function mostrarPassagens() {
         if (cargo === 'operacional') {
             botoesGestaoHtml = `
                 <div style="display: flex; gap: 8px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; justify-content: flex-end;">
-                    <button onclick="prepararEdicaoPlantao(${index})" style="background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'" title="Editar Relatório">
+                    <button onclick="prepararEdicaoPlantao(${indiceRealNoGlobal})" style="background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'" title="Editar Relatório">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
                 </div>
@@ -240,7 +262,7 @@ function mostrarPassagens() {
         } else {
             botoesGestaoHtml = `
                 <div style="display: flex; gap: 8px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; justify-content: flex-end;">
-                    <button onclick="prepararEdicaoPlantao(${index})" style="background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'" title="Editar Relatório">
+                    <button onclick="prepararEdicaoPlantao(${indiceRealNoGlobal})" style="background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'" title="Editar Relatório">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
                     <button onclick="excluirPlantao('${p.idFirebase}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'" title="Arquivar Relatório">
@@ -302,15 +324,46 @@ function gerarRelatorioPassagem() {
         alert("⚠️ Não há registros de plantão na nuvem para gerar o PDF.");
         return;
     }
+
+    // 🚀 INJEÇÃO DOS FILTROS NO PDF
+    let filtroPorteiroEl = document.getElementById('filtroPorteiroPassagem');
+    let filtroPorteiro = filtroPorteiroEl ? filtroPorteiroEl.value.trim().toLowerCase() : "";
+    
+    let filtroDataInicioEl = document.getElementById('filtroDataInicio');
+    let filtroDataInicio = filtroDataInicioEl ? filtroDataInicioEl.value : "";
+    
+    let filtroDataFimEl = document.getElementById('filtroDataFim');
+    let filtroDataFim = filtroDataFimEl ? filtroDataFimEl.value : "";
+
+    // Começa filtrando apenas os ativos
+    let filtrados = passagensGlobais.filter(p => !p.excluido);
+
+    // Aplica as mesmas regras de filtro da tela
+    if (filtroPorteiro !== "") {
+        filtrados = filtrados.filter(p => (p.porteiro || "").toLowerCase().trim() === filtroPorteiro);
+    }
+    if (filtroDataInicio !== "") {
+        filtrados = filtrados.filter(p => p.data >= filtroDataInicio);
+    }
+    if (filtroDataFim !== "") {
+        filtrados = filtrados.filter(p => p.data <= filtroDataFim);
+    }
+
+    // Se o filtro não retornar nada
+    if (filtrados.length === 0) {
+        alert("⚠️ Nenhum registro encontrado com os filtros selecionados para gerar o PDF.");
+        return;
+    }
     
     doc.setFontSize(16);
     doc.text("Livro de Plantão e Auditoria", 14, 20);
     doc.setFontSize(10);
-    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Condo up`, 14, 26);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')} | Condo Up`, 14, 26);
     
     const defaultsCheck = { portoes: true, elevadores: true, luzes: true, cameras: true, bombas: true, Energia: true };
 
-    const dados = passagensGlobais.map(p => {
+    // 🚀 AGORA ELE MAPEIA O ARRAY 'filtrados' EM VEZ DO BANCO INTEIRO
+    const dados = filtrados.map(p => {
         const dataF = p.data ? p.data.split('-').reverse().join('/') : "N/D";
         const horaF = p.hora || "--:--";
         const chk = Object.assign({}, defaultsCheck, p.checkList);
@@ -338,5 +391,5 @@ function gerarRelatorioPassagem() {
         styles: { fontSize: 9, cellPadding: 5 }
     });
 
-    doc.save("Auditoria_Plantao_Nuvem.pdf");
+    doc.save("Auditoria_Plantao_Filtrado.pdf");
 }
