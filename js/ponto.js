@@ -107,8 +107,14 @@ function registrarPonto(tipo) {
 }
 
 // ==========================================
-// 3. RENDERIZAR NA TELA
+// 3. RENDERIZAR E FILTRAR NA TELA
 // ==========================================
+
+// 🚀 GATILHO DO BOTÃO "FILTRAR NA TELA"
+function filtrarPorSeletores() {
+    mostrarPontos();
+}
+
 function mostrarPontos() {
     const lista = document.getElementById('listaPontos');
     const telaPonto = document.getElementById('ponto');
@@ -125,7 +131,7 @@ function mostrarPontos() {
     if (filtroFunc) filtrados = filtrados.filter(p => p.nome === filtroFunc);
 
     if (filtrados.length === 0) {
-        lista.innerHTML = '<div style="text-align: center; grid-column: 1 / -1; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;"><i class="fa-solid fa-clock" style="font-size: 30px; margin-bottom: 10px; opacity: 0.5;"></i><p>Nenhum registro de ponto encontrado.</p></div>';
+        lista.innerHTML = '<div style="text-align: center; grid-column: 1 / -1; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;"><i class="fa-solid fa-clock" style="font-size: 30px; margin-bottom: 10px; opacity: 0.5;"></i><p>Nenhum registro de ponto encontrado para este filtro.</p></div>';
         return;
     }
 
@@ -172,52 +178,164 @@ function mostrarPontos() {
 }
 
 // ==========================================
-// 4. GERAR PDF INDIVIDUAL
+// MÁQUINA DE GERAR PDF DE PONTO (1 PÁGINA COM ASSINATURA E CPF)
 // ==========================================
-function gerarFolhaPontoIndividual() {
-    const filtroMes = document.getElementById('filtroMesPonto').value;
-    const filtroFunc = document.getElementById('filtroFuncionarioPonto').value;
+async function gerarFolhaPontoIndividual(param1 = null, param2 = null) {
+    
+    let funcionarioNome = document.getElementById("filtroFuncionarioPonto")?.value;
+    let mesAno = document.getElementById("filtroMesPonto")?.value; 
 
-    if (!filtroMes || !filtroFunc) {
-        alert('⚠️ ATENÇÃO: Selecione o MÊS e o FUNCIONÁRIO para gerar a folha oficial.');
+    // 🚀 LÓGICA DE BLINDAGEM: Se o parâmetro for texto, veio da aba de relatórios!
+    if (typeof param1 === 'string' && param1.trim() !== '') {
+        funcionarioNome = param1;
+        mesAno = param2;
+    }
+
+    if (!funcionarioNome || !mesAno) {
+        alert("⚠️ Selecione o Mês e o Funcionário para gerar o PDF.");
         return;
     }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    const mesFormatado = filtroMes.split('-').reverse().join('/');
-    
-    doc.setFontSize(18);
-    doc.setTextColor(15, 23, 42);
-    doc.text(`Folha de Ponto Digital (Auditoria de Nuvem)`, 14, 20);
-    doc.setFontSize(11);
-    doc.text(`Funcionário: ${filtroFunc}`, 14, 28);
-    doc.text(`Mês de Referência: ${mesFormatado}`, 14, 34);
+    const [ano, mes] = mesAno.split('-');
+    const meuCondominio = localStorage.getItem("condominioId");
+    const diasNoMes = new Date(ano, mes, 0).getDate();
 
-    const filtrados = pontosGlobais.filter(p => p.data.startsWith(filtroMes) && p.nome === filtroFunc);
-
-    if (filtrados.length === 0) {
-        alert("Nenhum ponto registrado na NUVEM para este funcionário no mês selecionado.");
-        return;
+    // Controle visual do botão "Gerando..."
+    let btnGerar = null;
+    let textoOriginal = "";
+    
+    if (param1 && param1.currentTarget) {
+        btnGerar = param1.currentTarget;
+    } else if (typeof event !== 'undefined' && event && event.currentTarget) {
+        btnGerar = event.currentTarget;
     }
 
-    // Ordena do mais antigo para o mais novo no PDF
-    filtrados.sort((a, b) => a.timestamp - b.timestamp);
+    if (btnGerar) {
+        textoOriginal = btnGerar.innerHTML;
+        btnGerar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando...';
+        btnGerar.style.pointerEvents = 'none';
+    }
 
-    const dados = filtrados.map(p => {
-        const dataF = p.data.split('-').reverse().join('/');
-        return [dataF, p.hora || '--:--', p.tipo || p.acao || 'Registro S/N'];
-    });
+    try {
+        let cargo = "Não informado";
+        let cpf = "Não informado";
+        let assinatura = null;
+        
+        // Busca Cargo, CPF e Assinatura na Equipe
+        const equipeSnap = await db.collection("equipe")
+            .where("condominioId", "==", meuCondominio)
+            .where("nome", "==", funcionarioNome)
+            .get();
 
-    doc.autoTable({
-        startY: 42,
-        head: [['Data', 'Horário Gravado', 'Tipo de Registro']],
-        body: dados,
-        theme: 'striped',
-        headStyles: { fillColor: [15, 23, 42] },
-        styles: { fontSize: 10, cellPadding: 4 }
-    });
+        if (!equipeSnap.empty) {
+            let dadosEquipe = equipeSnap.docs[0].data();
+            cargo = dadosEquipe.cargo || "Não informado";
+            cpf = dadosEquipe.cpf || "______________________"; 
+            assinatura = dadosEquipe.assinatura || null; 
+        }
 
-    doc.save(`Auditoria_Ponto_${filtroFunc.replace(/\s+/g, '_')}_${filtroMes}.pdf`);
+        // Busca pontos
+        const pontoSnap = await db.collection("ponto")
+            .where("condominioId", "==", meuCondominio)
+            .where("nome", "==", funcionarioNome)
+            .get();
+
+        let registrosMes = {};
+        pontoSnap.forEach(doc => {
+            let p = doc.data();
+            if (p.data && p.data.startsWith(mesAno)) {
+                let dia = p.data.split('-')[2];
+                if(!registrosMes[dia]) registrosMes[dia] = {};
+                registrosMes[dia][p.tipo] = p.hora; 
+            }
+        });
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Cabeçalho Enxuto
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("CONDO UP - REGISTRO DE PONTO", 105, 15, null, null, "center");
+        doc.setLineWidth(0.5);
+        doc.line(14, 18, 196, 18);
+
+        // Dados do Funcionário
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold"); doc.text(`Mês/Ano:`, 14, 25); 
+        doc.setFont("helvetica", "normal"); doc.text(`${mes}/${ano}`, 33, 25);
+        
+        doc.setFont("helvetica", "bold"); doc.text(`Nome:`, 14, 31); 
+        doc.setFont("helvetica", "normal"); doc.text(`${funcionarioNome}`, 27, 31);
+        
+        doc.setFont("helvetica", "bold"); doc.text(`CPF:`, 110, 25); 
+        doc.setFont("helvetica", "normal"); doc.text(`${cpf}`, 120, 25);
+        
+        doc.setFont("helvetica", "bold"); doc.text(`Cargo:`, 110, 31); 
+        doc.setFont("helvetica", "normal"); doc.text(`${cargo}`, 123, 31);
+
+        // Monta Tabela
+        let linhasTabela = [];
+        for (let i = 1; i <= diasNoMes; i++) {
+            let diaStr = String(i).padStart(2, '0');
+            let reg = registrosMes[diaStr] || {};
+            linhasTabela.push([
+                diaStr,
+                reg["Entrada"] || "",
+                reg["Pausa Almoço"] || "",
+                reg["Retorno Almoço"] || "",
+                reg["Saída"] || "",
+                "" 
+            ]);
+        }
+
+        // Tabela Comprimida (cellPadding reduzido)
+        doc.autoTable({
+            startY: 35,
+            head: [['Dia', 'Entrada', 'Saída p/ Almoço', 'Retorno', 'Saída', 'Hora extra']],
+            body: linhasTabela,
+            theme: 'grid',
+            headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], halign: 'center', fontStyle: 'bold', lineWidth: 0.1 },
+            bodyStyles: { textColor: [0, 0, 0], lineWidth: 0.1 },
+            columnStyles: {
+                0: { halign: 'center', fontStyle: 'bold' },
+                1: { halign: 'center' },
+                2: { halign: 'center' },
+                3: { halign: 'center' },
+                4: { halign: 'center' }
+            },
+            styles: { cellPadding: 1.5, fontSize: 9, font: 'helvetica' } 
+        });
+
+        let finalY = doc.lastAutoTable.finalY + 15;
+        
+        // Injeta a Assinatura (se existir)
+        if (assinatura && assinatura.length > 50) {
+            doc.addImage(assinatura, 'PNG', 75, finalY, 60, 20);
+        }
+        
+        doc.setLineWidth(0.3);
+        doc.line(55, finalY + 22, 155, finalY + 22);
+        doc.setFont("helvetica", "bold");
+        doc.text("Assinatura do Funcionário", 105, finalY + 27, null, null, "center");
+
+        // Salva
+        doc.save(`Folha_Ponto_${funcionarioNome.replace(/\s+/g, '_')}_${mes}_${ano}.pdf`);
+
+    } catch (erro) {
+        console.error("Erro ao gerar folha de ponto:", erro);
+        alert("⚠️ Ocorreu um erro ao gerar a folha. Verifique a conexão.");
+    } finally {
+        if (btnGerar) {
+            btnGerar.innerHTML = textoOriginal;
+            btnGerar.style.pointerEvents = 'auto';
+        }
+    }
+}
+
+function mascararCpf(input) {
+    let value = input.value.replace(/\D/g, ''); // Remove tudo que não é número
+    value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    input.value = value;
 }
