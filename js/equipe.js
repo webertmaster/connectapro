@@ -1,36 +1,70 @@
 // ==========================================
-// ZERO LABS - CONNECTA PRO
+// EVO UPI - CONDO UP
 // equipe.js - Gestão de Equipe na Nuvem (MULTI-TENANT ATIVO)
 // ==========================================
 
 let equipeGlobais = [];
-let idFuncionarioEditando = null; // Controla se estamos adicionando ou editando
+let idFuncionarioEditando = null;
 
 // ==========================================
-// 1. ESCUTADOR EM TEMPO REAL (FIREBASE COM FILTRO)
+// MOTOR DE ASSINATURA DIGITAL
 // ==========================================
+let canvas, ctx, desenhando = false;
+
 window.addEventListener('DOMContentLoaded', () => {
-    // Pega a credencial do prédio no bolso do navegador
-    const meuCondominio = localStorage.getItem("condominioId");
+    // 1. Prepara o Quadro de Assinatura
+    canvas = document.getElementById('quadroAssinatura');
+    if(canvas) {
+        // 🚀 CORREÇÃO: Força a resolução interna para não bugar com a aba oculta
+        canvas.width = 600; 
+        canvas.height = 150;
+        
+        ctx = canvas.getContext('2d');
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#0f172a';
 
-    if (!meuCondominio) {
-        console.error("Erro Crítico: Condomínio não identificado no navegador!");
-        return;
+        const getPos = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            // Calcula a proporção real entre o tamanho visível e a resolução interna
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { 
+                x: (clientX - rect.left) * scaleX, 
+                y: (clientY - rect.top) * scaleY 
+            };
+        };
+
+        const start = (e) => { e.preventDefault(); desenhando = true; const {x,y} = getPos(e); ctx.beginPath(); ctx.moveTo(x, y); };
+        const draw = (e) => { e.preventDefault(); if(!desenhando) return; const {x,y} = getPos(e); ctx.lineTo(x, y); ctx.stroke(); };
+        const stop = (e) => { e.preventDefault(); desenhando = false; };
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stop);
+        canvas.addEventListener('mouseout', stop);
+
+        canvas.addEventListener('touchstart', start, {passive: false});
+        canvas.addEventListener('touchmove', draw, {passive: false});
+        canvas.addEventListener('touchend', stop);
     }
 
+    // 2. Carrega a lista de Funcionários
+    const meuCondominio = localStorage.getItem("condominioId");
+    if (!meuCondominio) return;
+
     if (typeof db !== 'undefined') {
-        // Filtra a equipe para mostrar apenas os funcionários do condomínio logado
         db.collection("equipe").where("condominioId", "==", meuCondominio).onSnapshot((snapshot) => {
             equipeGlobais = [];
             snapshot.forEach((doc) => {
                 let func = doc.data();
-                func.id = doc.id; // ID do Firebase
+                func.id = doc.id;
                 equipeGlobais.push(func);
             });
             
-            // Ordena a equipe alfabeticamente para organização do painel
             equipeGlobais.sort((a, b) => a.nome.localeCompare(b.nome));
-            
             localStorage.setItem('equipe', JSON.stringify(equipeGlobais));
             atualizarListaEquipe();
             if(typeof atualizarSelectsEquipe === 'function') atualizarSelectsEquipe();
@@ -39,52 +73,89 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function limparAssinatura() {
+    if(ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// Verifica se o quadro de assinatura está em branco
+function isCanvasBlank(canvas) {
+    const blank = document.createElement('canvas');
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+    return canvas.toDataURL() === blank.toDataURL();
+}
+
+// ==========================================
+// SALVAR E EDITAR NA NUVEM
+// ==========================================
 function addFuncionario() {
     const nome = document.getElementById('funcNome').value.trim();
     const cargo = document.getElementById('funcCargo').value.trim();
+    const cpfEl = document.getElementById('funcCpf');
+    const cpf = cpfEl ? cpfEl.value.trim() : "";
 
-    if (!nome || !cargo) {
-        alert('⚠️ O Nome e o Cargo são obrigatórios!');
+    if (!nome || !cargo || !cpf) {
+        alert('⚠️ Nome, Cargo e CPF são obrigatórios!');
         return;
     }
 
-    // Pega a credencial para carimbar o documento
+    // CAPTURA A IMAGEM DO QUADRO DE ASSINATURA
+    let assinaturaBase64 = null;
+    if (canvas && !isCanvasBlank(canvas)) {
+        assinaturaBase64 = canvas.toDataURL("image/png");
+    } else if (!idFuncionarioEditando) {
+        alert('⚠️ Por favor, peça para o funcionário assinar no quadro antes de salvar o cadastro.');
+        return;
+    }
+
     const meuCondominio = localStorage.getItem("condominioId");
 
     if (idFuncionarioEditando) {
         // MODO EDIÇÃO
-        db.collection("equipe").doc(idFuncionarioEditando).update({
-            nome,
-            cargo
-        }).then(() => {
-            idFuncionarioEditando = null;
-            
-            // Volta o botão para o visual original
-            const btnSalvar = document.querySelector("button[onclick='addFuncionario()']");
-            if (btnSalvar) {
-                btnSalvar.innerHTML = "<i class='fa-solid fa-plus'></i> Adicionar";
-                btnSalvar.style.background = "#3b82f6";
-            }
-            
-            document.getElementById('funcNome').value = '';
-            document.getElementById('funcCargo').value = '';
-            alert('✅ Dados do funcionário atualizados na nuvem!');
+        let dadosUpdate = { nome: nome, cargo: cargo, cpf: cpf };
+        
+        // Se ele desenhou uma assinatura nova, atualiza. Se não, mantém a velha.
+        if (assinaturaBase64) {
+            dadosUpdate.assinatura = assinaturaBase64;
+        }
+
+        db.collection("equipe").doc(idFuncionarioEditando).update(dadosUpdate).then(() => {
+            resetarFormulario();
+            alert('✅ Dados atualizados com sucesso!');
         }).catch(err => alert("Erro ao editar: " + err));
 
     } else {
         // MODO NOVO FUNCIONÁRIO
         db.collection("equipe").add({
-            nome,
-            cargo,
+            nome: nome,
+            cargo: cargo,
+            cpf: cpf,
+            assinatura: assinaturaBase64, // <-- CARIMBO SALVO NA NUVEM!
             dataCadastro: new Date().toISOString(),
-            condominioId: meuCondominio // A ETIQUETA INVISÍVEL FICA PRESA AQUI!
+            condominioId: meuCondominio,
+            excluido: false
         })
         .then(() => {
-            document.getElementById('funcNome').value = '';
-            document.getElementById('funcCargo').value = '';
-            alert('👥 Funcionário cadastrado na nuvem!');
+            resetarFormulario();
+            alert('👥 Funcionário e Assinatura cadastrados na nuvem!');
         })
         .catch(err => alert("Erro ao salvar: " + err));
+    }
+}
+
+function resetarFormulario() {
+    idFuncionarioEditando = null;
+    document.getElementById('funcNome').value = '';
+    document.getElementById('funcCargo').value = '';
+    const cpfEl = document.getElementById('funcCpf');
+    if(cpfEl) cpfEl.value = '';
+    
+    limparAssinatura(); // Limpa o quadro branco
+
+    const btnSalvar = document.getElementById('btnSalvarEquipe') || document.querySelector("button[onclick='addFuncionario()']");
+    if (btnSalvar) {
+        btnSalvar.innerHTML = "<i class='fa-solid fa-plus'></i> Cadastrar Funcionário";
+        btnSalvar.style.background = "#3b82f6";
     }
 }
 
@@ -94,17 +165,24 @@ function carregarFuncionarioParaEdicao(index) {
 
     document.getElementById('funcNome').value = func.nome;
     document.getElementById('funcCargo').value = func.cargo;
+    
+    const cpfEl = document.getElementById('funcCpf');
+    if(cpfEl) cpfEl.value = func.cpf || '';
 
-    // Altera visualmente o botão para mostrar que é uma edição
-    const btnSalvar = document.querySelector("button[onclick='addFuncionario()']");
+    limparAssinatura(); // Zera para não sobrescrever sem querer
+
+    const btnSalvar = document.getElementById('btnSalvarEquipe') || document.querySelector("button[onclick='addFuncionario()']");
     if (btnSalvar) {
         btnSalvar.innerHTML = "<i class='fa-solid fa-floppy-disk'></i> Salvar Alterações";
-        btnSalvar.style.background = "#10b981"; // Verde para confirmar edição
+        btnSalvar.style.background = "#10b981"; 
     }
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ==========================================
+// RENDERIZAÇÃO DE LISTA DE EQUIPE
+// ==========================================
 function atualizarListaEquipe() {
     const lista = document.getElementById('listaEquipe');
     if (!lista) return;
@@ -115,20 +193,16 @@ function atualizarListaEquipe() {
         return;
     }
 
-    // LÊ O CRACHÁ PARA DEFINIR A PERMISSÃO DOS BOTÕES
     const cargoUsuario = localStorage.getItem("usuario_cargo");
-
-    // 1. Dicionário inteligente de categorias
     const categorias = {
-        "Administração": ['Síndico', 'Gerente', 'Admin', 'Sub-síndico'],
-        "Portaria e Segurança": ['Porteiro', 'Segurança', 'Vigilante'],
-        "Manutenção e Limpeza": ['Zelador', 'Limpeza', 'Faxina', 'Manutenção']
+        "Administração": ['Síndico', 'Gerente', 'Admin', 'Sub-síndico', 'Administrador(a)'],
+        "Portaria e Segurança": ['Porteiro', 'Segurança', 'Vigilante', 'Porteiro Diurno', 'Porteiro Noturno'],
+        "Manutenção e Limpeza": ['Zelador', 'Limpeza', 'Faxina', 'Manutenção', 'Auxiliar de Limpeza']
     };
 
-    // 2. Agrupando a equipe atual com base no cargo
     const grupos = {};
     equipeGlobais.forEach((func, index) => {
-        let catEncontrada = "Outros"; // Categoria padrão caso o cargo seja diferente
+        let catEncontrada = "Outros";
         for (let cat in categorias) {
             if (categorias[cat].some(palavraChave => func.cargo.includes(palavraChave))) {
                 catEncontrada = cat;
@@ -139,17 +213,13 @@ function atualizarListaEquipe() {
         grupos[catEncontrada].push({ func, index });
     });
 
-    // 3. Ordem de renderização na tela
     const ordemExibicao = ["Administração", "Portaria e Segurança", "Manutenção e Limpeza", "Outros"];
 
     ordemExibicao.forEach(nomeGrupo => {
         if (grupos[nomeGrupo] && grupos[nomeGrupo].length > 0) {
-            
-            // Cria o título da seção separadora
             const tituloSessao = document.createElement('h2');
             tituloSessao.style.cssText = "grid-column: 1 / -1; margin-top: 25px; margin-bottom: 10px; font-size: 18px; color: #475569; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; display: flex; align-items: center; gap: 8px;";
             
-            // Define um ícone menor para o título da seção
             let iconTitulo = 'fa-users';
             if(nomeGrupo === "Administração") iconTitulo = 'fa-building-user';
             if(nomeGrupo === "Portaria e Segurança") iconTitulo = 'fa-shield-halved';
@@ -158,11 +228,9 @@ function atualizarListaEquipe() {
             tituloSessao.innerHTML = `<i class="fa-solid ${iconTitulo}" style="color: #94a3b8;"></i> ${nomeGrupo}`;
             lista.appendChild(tituloSessao);
 
-            // Cria um sub-grid só para os cards dessa categoria
             const gridSessao = document.createElement('div');
             gridSessao.style.cssText = "display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; grid-column: 1 / -1;";
 
-            // Desenha os cards dentro da seção correta
             grupos[nomeGrupo].forEach(item => {
                 const func = item.func;
                 const index = item.index;
@@ -172,7 +240,11 @@ function atualizarListaEquipe() {
                 else if (nomeGrupo === "Manutenção e Limpeza") { corBadge = '#f59e0b'; icone = 'fa-broom'; }
                 else if (nomeGrupo === "Administração") { corBadge = '#8b5cf6'; icone = 'fa-user-tie'; }
 
-                // BLINDAGEM DOS BOTÕES DE GESTÃO (EDITAR/REMOVER)
+                // ADICIONA O SELO DE ASSINATURA NO CARD
+                let assinaturaBadge = func.assinatura 
+                    ? `<span style="background: #ecfdf5; color: #059669; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #34d399;"><i class="fa-solid fa-check"></i> Assinatura Salva</span>` 
+                    : `<span style="background: #fef2f2; color: #dc2626; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #f87171;"><i class="fa-solid fa-xmark"></i> Sem Assinatura</span>`;
+
                 let botoesGestaoHtml = '';
                 if (cargoUsuario === 'operacional') {
                     botoesGestaoHtml = `
@@ -206,9 +278,18 @@ function atualizarListaEquipe() {
                     </div>
                     
                     <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #f1f5f9;">
-                        <p style="font-size: 15px; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-id-card-clip" style="color: #64748b; width: 15px;"></i> 
-                            <strong>Cargo:</strong> <span style="background: ${corBadge}20; color: ${corBadge}; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 13px;">${func.cargo}</span>
+                        <p style="font-size: 15px; color: #0f172a; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-id-card-clip" style="color: #64748b; width: 15px;"></i> 
+                                <strong>Cargo:</strong> <span style="background: ${corBadge}20; color: ${corBadge}; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 13px;">${func.cargo}</span>
+                            </span>
+                        </p>
+                        <p style="font-size: 14px; color: #475569; display: flex; align-items: center; justify-content: space-between; margin: 0;">
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-address-card" style="color: #64748b; width: 15px;"></i>
+                                <strong>CPF:</strong> ${func.cpf || 'Não informado'}
+                            </span>
+                            ${assinaturaBadge}
                         </p>
                     </div>
                     
